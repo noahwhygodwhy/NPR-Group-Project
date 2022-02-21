@@ -3,10 +3,40 @@
 
 #include <iostream>
 
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+#include "glm/glm.hpp"
+
+using namespace std;
+using namespace glm;
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SRGB_CAPABLE, 1);
+    glfwWindowHint(GLFW_SAMPLES, 16);
+    GLFWwindow* window = glfwCreateWindow(1000, 1000, "Title Goes here", NULL, NULL);
+
+    if (window == NULL)
+    {
+        cout << "Window creation failed" << endl;
+        exit(-1);
+    }
+
+    glfwMakeContextCurrent(window);
+
+
+
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        cout << "GLAD init failed" << endl;
+        exit(-1);
+    }
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
