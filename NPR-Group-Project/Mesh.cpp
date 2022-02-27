@@ -52,13 +52,13 @@ void Mesh::setupMesh() {
 
     glBindVertexArray(0);
 }
-void Mesh::draw(const Shader& shader, const mat4& parentTx) const {
+void Mesh::draw(Shader* shader, const mat4& parentTx) const {
 
     //printf("drawing mesh\n");
     //shader.use();
     mat4 tx = parentTx * this->transform;
-    shader.setMatFour("model", tx);
-    shader.setMatFour("normalMatrix", glm::transpose(glm::inverse(tx)));
+    shader->setMatFour("model", tx);
+    shader->setMatFour("normalMatrix", glm::transpose(glm::inverse(tx)));
 
 
 
@@ -80,11 +80,11 @@ void Mesh::draw(const Shader& shader, const mat4& parentTx) const {
 
     glActiveTexture(GL_TEXTURE0 + 0);
     glBindTexture(GL_TEXTURE_2D, diffuse.id);
-    shader.setInt("diffuseSampler", 0);
+    shader->setInt("diffuseSampler", 0);
 
     glActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, specular.id);
-    shader.setInt("specularSampler", 1);
+    shader->setInt("specularSampler", 1);
 
     glActiveTexture(GL_TEXTURE0);
 

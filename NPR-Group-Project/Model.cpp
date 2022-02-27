@@ -26,14 +26,14 @@ Model::~Model() {
 
 }
 
-void Model::draw(Shader& shader) {
+void Model::draw(Shader* shader) {
     for (const Mesh& m : children) {
         m.draw(shader, this->transform);
     }
 }
-void Model::drawBoundingBox(Shader& shader) {
+void Model::drawBoundingBox(Shader* shader) {
 
-    shader.setMatFour("model", this->transform);
+    shader->setMatFour("model", this->transform);
 
     glBindBuffer(GL_ARRAY_BUFFER, boundingVBO);
     glDrawArrays(GL_POINT, 0, this->boundingVertices.size());

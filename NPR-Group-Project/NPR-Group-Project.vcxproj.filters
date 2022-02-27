@@ -53,6 +53,12 @@
     <ClInclude Include="stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Screen.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image_write.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -66,6 +72,48 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="object.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="vertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="normalFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lineVertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lineFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="fragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="depthFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="simpleVertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="simpleFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="pointFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="pointVertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="tempPointDisplayFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="tempPointDisplayVertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="veronoiFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="veronoiVertShader.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

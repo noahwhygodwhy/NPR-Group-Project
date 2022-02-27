@@ -35,7 +35,6 @@ unsigned int makeShader(string filename, uint type) {
 
 //an object that has a vertex shader and frag shader for easier handling
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
-    printf("shader constructor\n");
     vertShader = makeShader(vertexPath, GL_VERTEX_SHADER);
     fragShader = makeShader(fragmentPath, GL_FRAGMENT_SHADER);
     program = glCreateProgram();

@@ -34,8 +34,8 @@ public:
 
     Model(string modelname);
     ~Model();
-    void draw(Shader& shader);
-    void drawBoundingBox(Shader& shader);
+    void draw(Shader* shader);
+    void drawBoundingBox(Shader* shader);
     float getNear(vec3 eye);
     float getFar(vec3 eye);
 private:

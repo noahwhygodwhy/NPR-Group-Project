@@ -154,15 +154,31 @@
     <ClInclude Include="KHR\khrplatform.h" />
     <ClInclude Include="Mesh.hpp" />
     <ClInclude Include="Model.hpp" />
+    <ClInclude Include="Screen.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="depthFragShader.glsl" />
+    <None Include="fragShader.glsl" />
+    <None Include="lineFragShader.glsl" />
+    <None Include="lineVertShader.glsl" />
+    <None Include="normalFragShader.glsl" />
     <None Include="object.frag" />
     <None Include="object.vert" />
     <None Include="packages.config" />
+    <None Include="pointFragShader.glsl" />
+    <None Include="pointVertShader.glsl" />
     <None Include="simple.frag" />
     <None Include="simple.vert" />
+    <None Include="simpleFragShader.glsl" />
+    <None Include="simpleVertShader.glsl" />
+    <None Include="tempPointDisplayFragShader.glsl" />
+    <None Include="tempPointDisplayVertShader.glsl" />
+    <None Include="veronoiFragShader.glsl" />
+    <None Include="veronoiVertShader.glsl" />
+    <None Include="vertShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

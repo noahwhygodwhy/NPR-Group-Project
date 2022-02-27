@@ -47,7 +47,7 @@ public:
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices, const mat4& meshTx, Texture diffuse, Texture specular);
     Mesh();
     ~Mesh();
-    void draw(const Shader& shader, const mat4& parentTx) const;
+    void draw(Shader* shader, const mat4& parentTx) const;
     pair<vec3, vec3> getBoundingBox() const;
 private:
     unsigned int VAO, VBO, EBO;
