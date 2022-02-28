@@ -123,7 +123,7 @@ vec4 calculatePolarPoints(const vec3& point, const vec2& polarCenter) {
         theta += (2.0 * glm::pi<double>());
     }
     double r = length(transPoint);
-
+     
     return vec4(point.x, point.y, r, theta);
 }
 
@@ -419,8 +419,8 @@ int main()
             return a.z < b.z;
         });
 
-        vector<DTriangle> triangles;
-        triangles.push_back(DTriangle(0, 1, 2, polarPoints));
+        vector<DTriangle*> triangles;
+        triangles.push_back(new DTriangle(0, 1, 2, polarPoints));
 
         DFrontier frontier(triangles.at(0));
 
@@ -428,6 +428,7 @@ int main()
         vec2 L, R;
         for (size_t i = 3; i < numberOfPoints; i++) {
             frontier.findEdge(polarPoints, polarOrigin, polarPoints[i], L, R);
+
         }
 
         

@@ -4,12 +4,14 @@
 DEdge::DEdge() {
 	this->pointA = 0;
 	this->pointB = 0;
+	this->triangle = NULL;
 }
 
-DEdge::DEdge(size_t a, size_t b)
+DEdge::DEdge(size_t a, size_t b, DTriangle* d)
 {
 	this->pointA = a;
 	this->pointB = b;
+	this->triangle = d;
 }
 
 DEdge::~DEdge()
@@ -24,9 +26,9 @@ DTriangle::DTriangle(size_t a, size_t b, size_t c, vec4* polarPoints)
 	this->points[0] = a;
 	this->points[1] = b;
 	this->points[2] = c;
-	this->edges[0] = DEdge(a, b);
-	this->edges[1] = DEdge(b, c);
-	this->edges[2] = DEdge(c, a);
+	this->edges[0] = DEdge(a, b, this);
+	this->edges[1] = DEdge(b, c, this);
+	this->edges[2] = DEdge(c, a, this);
 	this->neighbors[0] = NULL;
 	this->neighbors[1] = NULL;
 	this->neighbors[2] = NULL;
@@ -38,11 +40,11 @@ DTriangle::~DTriangle()
 }
 
 
-DFrontier::DFrontier(const DTriangle& initialTriangle)
+DFrontier::DFrontier(DTriangle* initialTriangle)
 {
-	this->edges.insert(initialTriangle.edges[0]);
-	this->edges.insert(initialTriangle.edges[1]);
-	this->edges.insert(initialTriangle.edges[2]);
+	this->edges.insert(initialTriangle->edges[0]);
+	this->edges.insert(initialTriangle->edges[1]);
+	this->edges.insert(initialTriangle->edges[2]);
 }
 
 DFrontier::~DFrontier()
