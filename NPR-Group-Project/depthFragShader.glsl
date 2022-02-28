@@ -1,7 +1,7 @@
 #version 460
 
 //uniform vec3 color;
-
+ 
 //uniform mat4 model;
 
 //uniform sampler2D texture_diffuse;

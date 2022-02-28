@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DTriangle.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
@@ -150,6 +151,7 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DTriangle.hpp" />
     <ClInclude Include="glad\glad.h" />
     <ClInclude Include="KHR\khrplatform.h" />
     <ClInclude Include="Mesh.hpp" />

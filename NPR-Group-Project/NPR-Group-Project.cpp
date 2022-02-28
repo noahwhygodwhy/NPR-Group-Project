@@ -1,16 +1,19 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <set>
 
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/norm.hpp>
-#include <glm/gtc/matrix_transform.hpp>`
+#include <glm/gtc/matrix_transform.hpp>
 #include "Shader.hpp"
 #include "Model.hpp"
 #include "Screen.hpp"
+#include "DTriangle.hpp"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -96,19 +99,54 @@ void frameBufferSizeCallback(GLFWwindow* window, int width, int height) {
 }
 
 
+/*struct vVector {
+    vec2 pos;
+    vec2 centroid;
+};
 
-typedef  struct {
-    uint  count;
-    uint  instanceCount;
-    uint  first;
-    uint  baseInstance;
-} DrawArraysIndirectCommand;
+struct vTriangle {
+    vVector a, b, c;
 
+    vTriangle(vec4 i, vec4 j, vec4 k)
+    {
+        vec2 centroid = (vec2(i.x, i.y) + vec2(j.x, j.y) + vec2(k.x, k.y)) / 3.0f;
+        this->a = vVector(vec2(i.x, i.y), centroid);
+        this->b = vVector(vec2(j.x, j.y), centroid);
+        this->c = vVector(vec2(k.x, k.y), centroid);
+    }
+};*/
 
+vec4 calculatePolarPoints(const vec3& point, const vec2& polarCenter) {
+    vec2 transPoint = vec2(point.x - 0.5, point.y - 0.5);
+    double theta = atan2(transPoint.x, transPoint.y);
+    if (point.y < 0.0) {
+        theta += (2.0 * glm::pi<double>());
+    }
+    double r = length(transPoint);
+
+    return vec4(point.x, point.y, r, theta);
+}
+
+//TODO: use texelfetch not texture()
 unordered_map<string, Shader*> shaders;
 Shader* shader;
 int main()
 {
+
+    /*double x = 1;
+    double y = -1;
+
+    double z = atan2(y, x);
+
+    if (y < 0.0) {
+        z += (2.0 * glm::pi<double>());
+    }
+
+    printf("%f\n", glm::degrees(z));
+
+    exit(-1);
+
+    */
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -173,6 +211,12 @@ int main()
     glVertexAttribPointer(0, 1, GL_BYTE, GL_FALSE, sizeof(char), (void*)0);
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fakeEBO);
     glBindVertexArray(0);
+
+
+    const size_t numberOfPoints = (1000 * thousandsOfPoints) + 4;//+4 corners 
+
+    GLfloat* pointTexturePixels = new GLfloat[numberOfPoints *3];
+    vec4* polarPoints = new vec4[numberOfPoints];
 
 
     while (!glfwWindowShouldClose(window)) {
@@ -355,30 +399,54 @@ int main()
 
         //GLfloat* pixels = new GLfloat[screenX * screenY * 3];
         
-        GLfloat* pixels = new GLfloat[(1000*thousandsOfPoints*3)+12];//the +12 is for the four corner points
         glBindTexture(GL_TEXTURE_2D, pointTexture);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, pixels);
-        vec3* coords = (vec3*)pixels;
-        size_t baseIndex = (1000 * thousandsOfPoints);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, pointTexturePixels);
+        vec3* coords = (vec3*)pointTexturePixels;
+        size_t baseIndex = numberOfPoints - 4;
         coords[baseIndex+0] = vec3(0.0, 0.0, 0.0);
         coords[baseIndex+1] = vec3(1.0, 0.0, 0.0);
         coords[baseIndex+2] = vec3(0.0, 1.0, 0.0);
         coords[baseIndex+3] = vec3(1.0, 1.0, 0.0);
+        vec2 polarOrigin(0.5, 0.5);
+        for (size_t i = 0; i < numberOfPoints; i++) {
+            polarPoints[i] = calculatePolarPoints(coords[i], polarOrigin);
+        }
+        
+        sort(polarPoints + 1, polarPoints + numberOfPoints, [](vec4 a, vec4 b) {
+            if (glm::epsilonEqual(a.z, b.z, glm::epsilon<float>())) {
+                return a.w < b.w;
+            }
+            return a.z < b.z;
+        });
+
+        vector<DTriangle> triangles;
+        triangles.push_back(DTriangle(0, 1, 2, polarPoints));
+
+        DFrontier frontier(triangles.at(0));
+
+        size_t pIndex = 3;
+        vec2 L, R;
+        for (size_t i = 3; i < numberOfPoints; i++) {
+            frontier.findEdge(polarPoints, polarOrigin, polarPoints[i], L, R);
+        }
+
         
 
+
+
+
+        /*
         vec3 x0 = coords[0];
 
-        sort(coords + 1, coords + baseIndex - 2, [x0](vec3 a, vec3 b) {
+        sort(coords + 1, coords + numberOfPoints, [x0](vec3 a, vec3 b) {
             float adist = glm::length2(a - x0);
             float bdist = glm::length2(b - x0);
             return adist < bdist;
         });
+        */
 
 
 
-        for (int i = 0; i < 1000 * thousandsOfPoints; i++) {
-            printf("%s\n", glm::to_string(coords[i]).c_str());
-        }
 
         cin.get();
 
