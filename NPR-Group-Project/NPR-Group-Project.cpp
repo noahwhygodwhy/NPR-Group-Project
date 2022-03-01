@@ -419,17 +419,20 @@ int main()
             return a.z < b.z;
         });
 
-        vector<DTriangle*> triangles;
+        unordered_set<DTriangle*> triangles = triangulate(polarPoints, numberOfPoints);
+
+
+        /*vector<DTriangle*> triangles;
         triangles.push_back(new DTriangle(0, 1, 2, polarPoints));
 
         DFrontier frontier(triangles.at(0));
-
         size_t pIndex = 3;
         vec2 L, R;
         for (size_t i = 3; i < numberOfPoints; i++) {
             frontier.findEdge(polarPoints, polarOrigin, polarPoints[i], L, R);
-
-        }
+            //create the triangle L, R, polarPoints[i]
+            //give that triangle 
+        }*/
 
         
 

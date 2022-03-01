@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <set>
+#include <unordered_set>
 using namespace std;
 using namespace glm;
 
@@ -14,13 +15,15 @@ class DEdge
 {
 public:
 	DEdge();
-	DEdge(size_t a, size_t b, DTriangle* triangle);
+	DEdge(size_t a, size_t b);
 	~DEdge();
 
 	size_t pointA;//each of these is an index into polar points
 	size_t pointB;//^
-	DTriae* triangle//each edge needs a pointer to possibly two triangles, not just one, cause edge duh
+	DTriangle* triangles[2];
 
+	void giveTriangle(DTriangle* t);
+	void setTriangles(DTriangle* a, DTriangle* b);
 private:
 };
 
@@ -28,27 +31,39 @@ private:
 class DTriangle
 {
 public:
-	DTriangle();
-	DTriangle(size_t a, size_t b, size_t c, vec4* polarPoints);
+	DTriangle(DEdge* a, DEdge* b, DEdge* c);
 	~DTriangle();
 	DTriangle* neighbors[3];
-	DEdge edges[3];
+	DEdge* edges[3];
 	size_t points[3];
-	vec4* polarPoints;
 private:
 };
 
 class DFrontier
 {
-	set<DEdge> edges;
+	set<DEdge*> edges;//why again does this need to be a set
 public:
 
-	DFrontier(DTriangle* initialTriangle);
+	DFrontier();
 	~DFrontier();
-	void findEdge(vec4* polarPoints, const vec2& polarOrigin, const vec2& thePoint, vec2& L, vec2& R);
-
+	DEdge* findEdge(vec4* polarPoints, const vec2& polarOrigin, size_t thePoint, size_t& L, size_t& R);
+	void removeEdge(DEdge* d);
+	void addEdge(DEdge* edge);
 private:
 
 };
+
+
+struct Triangulation {
+	unordered_set<DTriangle*> triangles;
+	unordered_set<DEdge*> edges;
+	DFrontier frontier;
+	vec4* polarPoints;
+	Triangulation(vec4* polarPoints) {
+		this->polarPoints = polarPoints;
+	};
+};
+
+unordered_set<DTriangle*> triangulate(vec4* polarPoints, size_t numberOfPoints);
 
 #endif;
