@@ -72,8 +72,21 @@ float random( vec3  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 float random( vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 
 
+vec2 corners[5] = vec2[5](
+    vec2(0.0, 0.0),
+    vec2(1.0, 0.0),
+    vec2(0.0, 1.0),
+    vec2(1.0, 1.0),
+    vec2(0.2, 0.2)
+);
+
 void main() 
 {   
+
+    if(int(gl_FragCoord.x) < 4 && int(gl_FragCoord.y) == 0) {
+        FragColor = vec4(corners[int(gl_FragCoord.x)], 0.0, 1.0);
+        return;
+    }
     float val = 0.0;
 
     //vec2 coordsFromTexture = vec2(0.0, 0.1);

@@ -126,11 +126,24 @@ DEdge* DFrontier::findEdge(vec4* polarPoints, const vec2& polarOrigin, size_t th
 
 
 
+void getSharedPoints(DTriangle* triA, DTriangle* triB,
+	size_t& sharedA, size_t& sharedB,
+	size_t& otherA, size_t& otherB) {
+	
+}
 
 void legaliseTriangle(Triangulation& t, DTriangle* tri) {
 	for (size_t i = 0; i < 3; i++) {
 		DTriangle* otherTri = tri->neighbors[i];
 		if (otherTri != NULL) {
+			size_t sharedA;
+			size_t sharedB;
+			for (size_t j = 0; j < 3; j++) {
+				for (size_t k = 0; k < 3; k++) {
+					//sharedEdge = otherTri->edges[j];
+					//if()
+				}
+			}
 			//check if the existing edge is longer than the
 			//edge if the other two points were used
 			//if so swap it
@@ -147,7 +160,6 @@ void addTriangle(Triangulation& t, size_t point) {
 	size_t L, R;
 	DEdge* d = t.frontier.findEdge(t.polarPoints, vec2(0.5), point, L, R);
 	t.frontier.removeEdge(d);
-	//TODO: you were here
 	DEdge* newL = new DEdge(point, L);
 	DEdge* newR = new DEdge(point, R);
 	DTriangle* newTriangle = new DTriangle(d, newL, newR);

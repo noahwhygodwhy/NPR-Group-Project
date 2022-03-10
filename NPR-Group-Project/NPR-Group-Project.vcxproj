@@ -176,10 +176,20 @@
     <None Include="simple.vert" />
     <None Include="simpleFragShader.glsl" />
     <None Include="simpleVertShader.glsl" />
+    <None Include="Stage1FragShader.glsl" />
+    <None Include="Stage2FragShader.glsl" />
+    <None Include="Stage1VertShader.glsl" />
+    <None Include="Stage2VertShader.glsl" />
+    <None Include="Stage3FragShader.glsl" />
+    <None Include="Stage3VertShader.glsl" />
+    <None Include="Stage4FragShader.glsl" />
+    <None Include="Stage4VertShader.glsl" />
     <None Include="tempPointDisplayFragShader.glsl" />
     <None Include="tempPointDisplayVertShader.glsl" />
     <None Include="veronoiFragShader.glsl" />
     <None Include="veronoiVertShader.glsl" />
+    <None Include="veronPointFragShader.glsl" />
+    <None Include="veronPointVertShader.glsl" />
     <None Include="vertShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -122,5 +122,35 @@
     <None Include="veronoiVertShader.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="veronPointFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="veronPointVertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage1VertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage1FragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage2FragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage2VertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage3VertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage3FragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage4VertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Stage4FragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -2,17 +2,12 @@
 
 in vec2 fraguv;
 in vec2 thePoint;
-
 out vec4 FragColor;
 
-uniform sampler2D colorTexture;
+uniform sampler2D pointTexture;
 
 void main() 
 {
-    FragColor = texture(colorTexture, thePoint); 
-
-
-    FragColor = vec4(thePoint, 0.2, 1.0);
+    FragColor = vec4(thePoint, 0.0, 1.0);
     gl_FragDepth = distance(fraguv, thePoint);
-
 }
