@@ -20,8 +20,8 @@
 using namespace std;
 using namespace glm;
 
-
-int stageUpTo = 7;
+int shaderMode = 1;
+int stageUpTo = 6;
 constexpr int maxStage = 9;
 
 double deltaTime = 0.0f;	// Time between current frame and last frame
@@ -72,7 +72,7 @@ void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
     glBindFramebuffer(GL_FRAMEBUFFER, dft.framebuffer);
     glGenTextures(1, &dft.texture);
     glBindTexture(GL_TEXTURE_2D, dft.texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//GL_LINEAR
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dft.texture, 0);
@@ -106,7 +106,7 @@ void genFrameBuffers() {
 
     glGenTextures(1, &stage4Texture1);
     glBindTexture(GL_TEXTURE_2D, stage4Texture1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenX, screenY, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenX, screenY, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//GL_LINEAR
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, stage4Texture1, 0);
@@ -114,18 +114,18 @@ void genFrameBuffers() {
 
     glGenTextures(1, &stage4Texture2);
     glBindTexture(GL_TEXTURE_2D, stage4Texture2);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenX, screenY, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenX, screenY, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//GL_LINEAR
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, stage4Texture2, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, stage4Texture2, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glGenTextures(1, &stage4Texture3);
     glBindTexture(GL_TEXTURE_2D, stage4Texture3);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenX, screenY, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenX, screenY, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//GL_LINEAR
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, stage4Texture3, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, stage4Texture3, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glGenRenderbuffers(1, &stage4RBO);
@@ -258,19 +258,26 @@ int main()
     shaders["line"] = new Shader("lineVertShader.glsl", "lineFragShader.glsl");
     shaders["point"] = new Shader("pointVertShader.glsl", "pointFragShader.glsl");
     shaders["coord"] = new Shader("tempPointDisplayVertShader.glsl", "tempPointDisplayFragShader.glsl");
+
     shaders["veronoi"] = new Shader("veronoiVertShader.glsl", "veronoiFragShader.glsl");
     shaders["vPoints"] = new Shader("veronPointVertShader.glsl", "veronPointFragShader.glsl");
     shaders["stage1"] = new Shader("Stage1VertShader.glsl", "Stage1FragShader.glsl");
     shaders["stage2"] = new Shader("Stage2VertShader.glsl", "Stage2FragShader.glsl");
     shaders["stage3"] = new Shader("Stage3VertShader.glsl", "Stage3FragShader.glsl");
     shaders["stage4"] = new Shader("Stage4VertShader.glsl", "Stage4FragShader.glsl");
+    shaders["stage5"] = new Shader("Stage5VertShader.glsl", "Stage5FragShader.glsl");
+
+    shaders["kuwahara"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
+
+
+
    // shaders["vPoints"] = new Shader("veronPointVertShader.glsl", "veronPointFragShader.glsl");
 
 
 
 
 
-    mat4 ortho = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f);
+    mat4 ortho = glm::ortho(0.0f, 1.0f, 0.0f, float(screenX)/float(screenY));
 
 
     unsigned int fakeVAO, fakeEBO, fakeVBO;
@@ -475,117 +482,177 @@ int main()
             glBindVertexArray(0);
         }
 
+        if (shaderMode == 0) {
+            //draw veronoi diagram as part of stage 1 //TODO: do this better/faster/harder/stronger
+            if (stageUpTo > 5) {
+                if (stageUpTo > 6) glBindFramebuffer(GL_FRAMEBUFFER, stage1.framebuffer);
+                if (stageUpTo == 6) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-//draw veronoi diagram as part of stage 1 //TODO: do this better/faster/harder/stronger
-        if (stageUpTo > 5) {
-            if (stageUpTo > 6) glBindFramebuffer(GL_FRAMEBUFFER, stage1.framebuffer);
-            if (stageUpTo == 6) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                shader = shaders["stage1"];
+                shader->use();
+                shader->setMatFour("projection", ortho);
+                shader->setInt("width", screenX);
 
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["stage1"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
-            shader->setInt("width", screenX);
+                uint32_t pointLocation = glGetUniformLocation(shader->program, "pointTexture");
+                glUniform1i(pointLocation, 0);
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
 
-            uint32_t pointLocation = glGetUniformLocation(shader->program, "pointTexture");
-            glUniform1i(pointLocation, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
+                flatscreen.drawInstances(shader, numberOfPoints);
+            }
 
-            flatscreen.drawInstances(shader, numberOfPoints);
+            //stage 2 of the triangulation
+
+            if (stageUpTo > 6) {
+                if (stageUpTo > 7) glBindFramebuffer(GL_FRAMEBUFFER, stage2.framebuffer);
+                if (stageUpTo == 7) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                shader = shaders["stage2"];
+                shader->use();
+                shader->setMatFour("projection", ortho);
+
+
+                uint32_t stage2PointLocation = glGetUniformLocation(shader->program, "pointTexture");
+                glUniform1i(stage2PointLocation, 0);
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
+
+                uint32_t stage1Location = glGetUniformLocation(shader->program, "stage1Texture");
+                glUniform1i(stage1Location, 1);
+                glActiveTexture(GL_TEXTURE0 + 1);
+                glBindTexture(GL_TEXTURE_2D, stage1.texture);
+
+                flatscreen.drawInstances(shader, numberOfPoints);
+            }
+
+            //stage 3 of the triangulation
+            if (stageUpTo > 7) {
+                if (stageUpTo > 8) glBindFramebuffer(GL_FRAMEBUFFER, stage3.framebuffer);
+                if (stageUpTo == 8) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                shader = shaders["stage3"];
+                shader->use();
+                shader->setMatFour("projection", ortho);
+
+                uint32_t stage1Location2 = glGetUniformLocation(shader->program, "stage1Texture");
+                glUniform1i(stage1Location2, 0);
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, stage1.texture);
+
+                uint32_t stage2Location = glGetUniformLocation(shader->program, "stage2Texture");
+                glUniform1i(stage2Location, 1);
+                glActiveTexture(GL_TEXTURE0 + 1);
+                glBindTexture(GL_TEXTURE_2D, stage2.texture);
+
+                uint32_t pointLocation3 = glGetUniformLocation(shader->program, "pointTexture");
+                glUniform1i(pointLocation3, 2);
+                glActiveTexture(GL_TEXTURE0 + 2);
+                glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
+
+                flatscreen.drawInstances(shader, numberOfPoints);
+            }
+            //stage 4 draw triangles from the 3 points   
+            if (stageUpTo > 8)
+            {
+                /*glBindFramebuffer(GL_FRAMEBUFFER, stage4Framebuffer);
+                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                shader = shaders["stage4"];
+                shader->use();
+                shader->setMatFour("projection", ortho);
+
+                uint32_t stage1Location4 = glGetUniformLocation(shader->program, "stage1Texture");
+                glUniform1i(stage1Location4, 0);
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, stage1.texture);
+
+                uint32_t stage2Location4 = glGetUniformLocation(shader->program, "stage2Texture");
+                glUniform1i(stage2Location4, 1);
+                glActiveTexture(GL_TEXTURE0 + 1);
+                glBindTexture(GL_TEXTURE_2D, stage2.texture);
+
+                uint32_t stage3Location4 = glGetUniformLocation(shader->program, "stage3Texture");
+                glUniform1i(stage3Location4, 2);
+                glActiveTexture(GL_TEXTURE0 + 2);
+                glBindTexture(GL_TEXTURE_2D, stage3.texture);
+
+                /*uint32_t colorLocation4 = glGetUniformLocation(shader->program, "colorTexture");
+                glUniform1i(colorLocation4, 3);
+                glActiveTexture(GL_TEXTURE0 + 3);
+                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+
+                flatscreen.drawInstances(shader, numberOfPoints);*/
+
+
+                //stage5 drawing the 
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                shader = shaders["stage5"];
+                shader->use();
+                shader->setMatFour("projection", ortho);
+
+                uint32_t stage1Location5 = glGetUniformLocation(shader->program, "stage4Texture1");
+                glUniform1i(stage1Location5, 0);
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, stage4Texture1);
+                //glBindTexture(GL_TEXTURE_2D, stage1.texture);
+
+                uint32_t stage2Location5 = glGetUniformLocation(shader->program, "stage4Texture2");
+                glUniform1i(stage2Location5, 1);
+                glActiveTexture(GL_TEXTURE0 + 1);
+                glBindTexture(GL_TEXTURE_2D, stage4Texture2);
+                //glBindTexture(GL_TEXTURE_2D, stage2.texture);
+
+                uint32_t stage3Location5 = glGetUniformLocation(shader->program, "stage4Texture3");
+                glUniform1i(stage3Location5, 2);
+                glActiveTexture(GL_TEXTURE0 + 2);
+                glBindTexture(GL_TEXTURE_2D, stage4Texture3);
+                //glBindTexture(GL_TEXTURE_2D, stage3.texture);
+
+                uint32_t colorLocation5 = glGetUniformLocation(shader->program, "colorTexture");
+                glUniform1i(colorLocation5, 3);
+                glActiveTexture(GL_TEXTURE0 + 3);
+                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+
+                flatscreen.draw(shader);
+
+            }
         }
+        if (shaderMode == 1) {
+            if (stageUpTo > 5) {
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 
-//stage 2 of the triangulation
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (stageUpTo > 6) {
-            if (stageUpTo > 7) glBindFramebuffer(GL_FRAMEBUFFER, stage2.framebuffer);
-            if (stageUpTo == 7) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                shader = shaders["kuwahara"];
+                shader->use();
+                shader->setMatFour("projection", ortho);
+                shader->setInt("kernalSize", 9);
+                shader->setInt("width", screenX);
+                shader->setInt("height", screenY);
 
-            glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                uint32_t colorLocation6 = glGetUniformLocation(shader->program, "colorTexture");
+                glUniform1i(colorLocation6, 0);
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
 
-            shader = shaders["stage2"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
-
-
-            uint32_t stage2PointLocation = glGetUniformLocation(shader->program, "pointTexture");
-            glUniform1i(stage2PointLocation, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
-
-            uint32_t stage1Location = glGetUniformLocation(shader->program, "stage1Texture");
-            glUniform1i(stage1Location, 1);
-            glActiveTexture(GL_TEXTURE0 + 1);
-            glBindTexture(GL_TEXTURE_2D, stage1.texture);
-
-            flatscreen.drawInstances(shader, numberOfPoints);
-        }
-
-//stage 3 of the triangulation
-        if (stageUpTo > 7) {
-            if (stageUpTo > 8) glBindFramebuffer(GL_FRAMEBUFFER, stage3.framebuffer);
-            if (stageUpTo == 8) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            shader = shaders["stage3"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
-
-            uint32_t stage1Location2 = glGetUniformLocation(shader->program, "stage1Texture");
-            glUniform1i(stage1Location2, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, stage1.texture);
-
-            uint32_t stage2Location = glGetUniformLocation(shader->program, "stage2Texture");
-            glUniform1i(stage2Location, 1);
-            glActiveTexture(GL_TEXTURE0 + 1);
-            glBindTexture(GL_TEXTURE_2D, stage2.texture);
-
-            uint32_t pointLocation3 = glGetUniformLocation(shader->program, "pointTexture");
-            glUniform1i(pointLocation3, 2);
-            glActiveTexture(GL_TEXTURE0 + 2);
-            glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
-
-            flatscreen.drawInstances(shader, numberOfPoints);
-        }
-//stage 4 draw triangles from the 3 points   
-        if (stageUpTo >8)
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            shader = shaders["stage4"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
-
-            uint32_t stage1Location4 = glGetUniformLocation(shader->program, "stage1Texture");
-            glUniform1i(stage1Location4, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, stage1.texture);
-
-            uint32_t stage2Location4 = glGetUniformLocation(shader->program, "stage2Texture");
-            glUniform1i(stage2Location4, 1);
-            glActiveTexture(GL_TEXTURE0 + 1);
-            glBindTexture(GL_TEXTURE_2D, stage2.texture);
-
-            uint32_t stage3Location4 = glGetUniformLocation(shader->program, "stage3Texture");
-            glUniform1i(stage3Location4, 2);
-            glActiveTexture(GL_TEXTURE0 + 2);
-            glBindTexture(GL_TEXTURE_2D, stage3.texture);
-
-            uint32_t colorLocation4 = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocation4, 3);
-            glActiveTexture(GL_TEXTURE0 + 3);
-            glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
-
-            flatscreen.draw(shader);
-
+                flatscreen.draw(shader);
+            }
         }
 
         processInput(window);

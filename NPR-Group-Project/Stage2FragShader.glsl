@@ -10,7 +10,16 @@ uniform sampler2D stage1Texture;
 
 void main() 
 {    
+
+    //ivec2 texelCoord = ivec2(gl_FragCoord.x, gl_FragCoord.y);
+    
+    //vec2 stage1Point = texelFetch(stage1Texture, texelCoord, 0).xy;
+
     vec2 stage1Point = texelFetch(stage1Texture, ivec2(gl_FragCoord.xy), 0).xy;
+
+    if(possiblePoint == stage1Point) {
+        discard;
+    }
 
     vec2 c = possiblePoint-stage1Point;
     vec2 v = normalize(fraguv-stage1Point);

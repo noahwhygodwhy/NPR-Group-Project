@@ -157,13 +157,21 @@ void main()
 
     vec2 stage1Point = texelFetch(stage1Texture, ivec2(gl_FragCoord.xy), 0).xy;
     vec2 stage2Point = texelFetch(stage2Texture, ivec2(gl_FragCoord.xy), 0).xy;
+    
+
+
+    if(possiblePoint == stage1Point || possiblePoint == stage2Point || stage1Point == stage2Point) {
+        discard;
+    }
+
+
     vec2 circumCenter = getCenter(stage1Point, stage2Point, possiblePoint);
 
 
-    bool sameSide = sameSide(stage1Point, stage2Point, fraguv, circumCenter);
+    bool samsies = sameSide(stage1Point, stage2Point, fraguv, circumCenter);
     //float ourSign = signage(fraguv, stage1Point, stage2Point);
     //float theirSign = signage(circumCenter, stage1Point, stage2Point);
-    if(sameSide){
+    if(!samsies){
         discard;
     }
     float dist = distance(stage1Point, circumCenter);

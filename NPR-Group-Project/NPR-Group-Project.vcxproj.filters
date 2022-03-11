@@ -16,6 +16,12 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{d47c892c-508c-4bd5-bcbf-e73c7c65e9cf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Triangle Shaders">
+      <UniqueIdentifier>{7d5639f5-58e0-4e16-8691-c485685544a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Paint Shaders">
+      <UniqueIdentifier>{c353bde5-7cc5-461b-b9fc-72477cdcf505}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NPR-Group-Project.cpp">
@@ -116,41 +122,53 @@
     <None Include="tempPointDisplayVertShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="veronoiFragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="veronoiVertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="veronPointFragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="veronPointVertShader.glsl">
-      <Filter>Shaders</Filter>
+    <None Include="Stage5VertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
     </None>
     <None Include="Stage1VertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Stage1FragShader.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\Triangle Shaders</Filter>
     </None>
     <None Include="Stage2FragShader.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\Triangle Shaders</Filter>
     </None>
     <None Include="Stage2VertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Stage3VertShader.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\Triangle Shaders</Filter>
     </None>
     <None Include="Stage3FragShader.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\Triangle Shaders</Filter>
     </None>
-    <None Include="Stage4VertShader.glsl">
-      <Filter>Shaders</Filter>
+    <None Include="Stage3VertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
     </None>
     <None Include="Stage4FragShader.glsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="Stage4VertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="Stage5FragShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="Stage1FragShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="veronPointVertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="veronPointFragShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="veronoiVertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="veronoiFragShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="KuwaharaFragShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
+    </None>
+    <None Include="KuwaharaVertShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

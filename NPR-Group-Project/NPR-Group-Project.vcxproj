@@ -164,6 +164,8 @@
   <ItemGroup>
     <None Include="depthFragShader.glsl" />
     <None Include="fragShader.glsl" />
+    <None Include="KuwaharaFragShader.glsl" />
+    <None Include="KuwaharaVertShader.glsl" />
     <None Include="lineFragShader.glsl" />
     <None Include="lineVertShader.glsl" />
     <None Include="normalFragShader.glsl" />
@@ -184,6 +186,8 @@
     <None Include="Stage3VertShader.glsl" />
     <None Include="Stage4FragShader.glsl" />
     <None Include="Stage4VertShader.glsl" />
+    <None Include="Stage5FragShader.glsl" />
+    <None Include="Stage5VertShader.glsl" />
     <None Include="tempPointDisplayFragShader.glsl" />
     <None Include="tempPointDisplayVertShader.glsl" />
     <None Include="veronoiFragShader.glsl" />
