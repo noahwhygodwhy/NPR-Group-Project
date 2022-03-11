@@ -71,6 +71,9 @@
     <ClInclude Include="DTriangle.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="delaunator.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -169,6 +172,12 @@
     </None>
     <None Include="KuwaharaVertShader.glsl">
       <Filter>Shaders\Paint Shaders</Filter>
+    </None>
+    <None Include="thirdVertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="thirdFragShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

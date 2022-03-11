@@ -2,7 +2,8 @@
 
 out vec4 FragColor;
 
-uniform int kernalSize;
+uniform int kernalWidth;
+uniform int kernalHeight;
 
 uniform int width;
 uniform int height;
@@ -50,25 +51,25 @@ void main()
     float possibleVariance = 0.0;
     vec3 possibleMean = vec3(0);
 
-    getMeanAndVariance(ivec2(-kernalSize, 0), ivec2(-kernalSize, 0), possibleMean, possibleVariance);
+    getMeanAndVariance(ivec2(-kernalWidth, 0), ivec2(-kernalHeight, 0), possibleMean, possibleVariance);
     int itLess = int(possibleVariance<minVariance);
     int itGreater = 1-itLess;
     minVariance = (itLess*possibleVariance)+(itGreater*minVariance);
     minMean = (itLess*possibleMean)+(itGreater*minMean);
 
-    getMeanAndVariance(ivec2(0, kernalSize), ivec2(-kernalSize, 0), possibleMean, possibleVariance);
+    getMeanAndVariance(ivec2(0, kernalWidth), ivec2(-kernalHeight, 0), possibleMean, possibleVariance);
     itLess = int(possibleVariance<minVariance);
     itGreater = 1-itLess;
     minVariance = (itLess*possibleVariance)+(itGreater*minVariance);
     minMean = (itLess*possibleMean)+(itGreater*minMean);
 
-    getMeanAndVariance(ivec2(-kernalSize, 0), ivec2(0, kernalSize), possibleMean, possibleVariance);
+    getMeanAndVariance(ivec2(-kernalWidth, 0), ivec2(0, kernalHeight), possibleMean, possibleVariance);
     itLess = int(possibleVariance<minVariance);
     itGreater = 1-itLess;
     minVariance = (itLess*possibleVariance)+(itGreater*minVariance);
     minMean = (itLess*possibleMean)+(itGreater*minMean);
     
-    getMeanAndVariance(ivec2(0, kernalSize), ivec2(0, kernalSize), possibleMean, possibleVariance);
+    getMeanAndVariance(ivec2(0, kernalWidth), ivec2(0, kernalHeight), possibleMean, possibleVariance);
     itLess = int(possibleVariance<minVariance);
     itGreater = 1-itLess;
     minVariance = (itLess*possibleVariance)+(itGreater*minVariance);

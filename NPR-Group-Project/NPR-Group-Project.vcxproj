@@ -151,6 +151,7 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="delaunator.hpp" />
     <ClInclude Include="DTriangle.hpp" />
     <ClInclude Include="glad\glad.h" />
     <ClInclude Include="KHR\khrplatform.h" />
@@ -190,6 +191,8 @@
     <None Include="Stage5VertShader.glsl" />
     <None Include="tempPointDisplayFragShader.glsl" />
     <None Include="tempPointDisplayVertShader.glsl" />
+    <None Include="thirdFragShader.glsl" />
+    <None Include="thirdVertShader.glsl" />
     <None Include="veronoiFragShader.glsl" />
     <None Include="veronoiVertShader.glsl" />
     <None Include="veronPointFragShader.glsl" />

@@ -14,6 +14,8 @@
 #include "Screen.hpp"
 #include "DTriangle.hpp"
 
+#include "delaunator.hpp"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -186,32 +188,7 @@ unordered_map<string, Shader*> shaders;
 Shader* shader;
 int main()
 {
-
-
-    /*printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(1.0, 1.0))));
-    printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(1.0, 0.0))));
-    printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(1.0, -1.0))));
-    printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(0.0, -1.0))));
-    printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(-1.0, -1.0))));
-    printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(-1.0, 0.0))));
-    printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(-1.0, 1.0))));
-    printf("%f\n", glm::dot(vec2(0.0, 1.0), glm::normalize(vec2(0.0, 1.0))));
-
-    exit(-1);*/
-    /*double x = 1;
-    double y = -1;
-
-    double z = atan2(y, x);
-
-    if (y < 0.0) {
-        z += (2.0 * glm::pi<double>());
-    }
-
-    printf("%f\n", glm::degrees(z));
-
-    exit(-1);
-
-    */
+    
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -240,10 +217,11 @@ int main()
 
     glfwSetKeyCallback(window, keyCallback);
 
-    glFrontFace(GL_CCW);
-    glEnable(GL_CULL_FACE);
+    //glFrontFace(GL_CCW);
+    //glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
     glEnable(GL_FRAMEBUFFER_SRGB);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
 
     Screen flatscreen;
 
@@ -266,6 +244,8 @@ int main()
     shaders["stage3"] = new Shader("Stage3VertShader.glsl", "Stage3FragShader.glsl");
     shaders["stage4"] = new Shader("Stage4VertShader.glsl", "Stage4FragShader.glsl");
     shaders["stage5"] = new Shader("Stage5VertShader.glsl", "Stage5FragShader.glsl");
+
+    shaders["thirdPartyDelaunay"] = new Shader("thirdVertShader.glsl", "thirdFragShader.glsl");
 
     shaders["kuwahara"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
 
@@ -294,11 +274,17 @@ int main()
     glBindVertexArray(0);
 
 
-    //const size_t numberOfPoints = (numberOfPoints) + 4;//+4 corners 
+    unsigned int triangleVAO, triangleVBO, triangleEBO;
 
-    GLfloat* pointTexturePixels = new GLfloat[numberOfPoints *3];
-    vec4* polarPoints = new vec4[numberOfPoints];
 
+
+
+
+
+    GLfloat* pointTexturePixels = new GLfloat[numberOfPoints *2];
+    //vec4* polarPoints = new vec4[numberOfPoints];
+
+    //vec2* pointsArray = new vec2[numberOfPoints];
 
     int frameCounter = -1;
     float frameTimes[30](0);
@@ -337,9 +323,11 @@ int main()
         float cosit = (cos(currentFrame / 5.0f));
         float ratio = (float)screenX / (float)screenY;
 
-        //vec3 eye = vec3(sinit * 5.0f, 2.0f, cosit * 5.0f);
-        vec3 eye = vec3(5.0, 5.0, 5.0);
+        vec3 eye = vec3(sinit * 5.0f, 2.0f, cosit * 5.0f);
+        //vec3 eye = vec3(5.0, 5.0, 5.0);
         mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
+
+
 
         //Draw the depth of the object
         if (stageUpTo > -1) {
@@ -633,7 +621,52 @@ int main()
             }
         }
         if (shaderMode == 1) {
-            if (stageUpTo > 5) {
+
+            glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
+            vector<double> points;
+            for (int i = 0; i < numberOfPoints * 2; i++) {
+                points.push_back(pointTexturePixels[i]);
+            }
+
+
+            auto d = delaunator::Delaunator(points);
+
+            
+
+            glGenVertexArrays(1, &triangleVAO);
+            glGenBuffers(1, &triangleVBO);
+            glGenBuffers(1, &triangleEBO);
+            glBindVertexArray(triangleVAO);
+
+            glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+            glBufferData(GL_ARRAY_BUFFER, d.coords.size(), d.coords.data(), GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, d.triangles.size(), d.triangles.data(), GL_STATIC_DRAW);
+
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+            //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fakeEBO);
+            
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            shader = shaders["thirdPartyDelaunay"];
+            shader->use();
+            shader->setMatFour("projection", ortho);
+
+            uint32_t colorLocationThird = glGetUniformLocation(shader->program, "colorTexture");
+            glUniform1i(colorLocationThird, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+            printf("drawing\n");
+            glDrawElements(GL_TRIANGLES, d.triangles.size(), GL_UNSIGNED_INT, 0);
+
+
+            /*if (stageUpTo > 5) {
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 
@@ -642,7 +675,8 @@ int main()
                 shader = shaders["kuwahara"];
                 shader->use();
                 shader->setMatFour("projection", ortho);
-                shader->setInt("kernalSize", 9);
+                shader->setInt("kernalWidth", 5);
+                shader->setInt("kernalHeight", 3);
                 shader->setInt("width", screenX);
                 shader->setInt("height", screenY);
 
@@ -652,7 +686,7 @@ int main()
                 glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
 
                 flatscreen.draw(shader);
-            }
+            }*/
         }
 
         processInput(window);
