@@ -623,6 +623,11 @@ int main()
         if (shaderMode == 1) {
 
             glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
+
+
+            for (int i = 0; i < numberOfPoints; i+=3) {
+                printf("%f, %f, %f\n", pointTexturePixels[i], pointTexturePixels[i + 1], pointTexturePixels[i + 2]);
+            }
             vector<double> points;
             for (int i = 0; i < numberOfPoints * 2; i++) {
                 points.push_back(pointTexturePixels[i]);
@@ -631,6 +636,11 @@ int main()
 
             auto d = delaunator::Delaunator(points);
 
+            printf("printing out triangles\n");
+            for (int i = 0; i < d.triangles.size(); i+=3) {
+                printf("%f, %f, %f\n", d.coords.at(d.triangles.at(i)), d.coords.at(d.triangles.at(i+1)), d.coords.at(d.triangles.at(i + 2)));
+            }
+            exit(-1);
             
 
             glGenVertexArrays(1, &triangleVAO);
