@@ -74,6 +74,9 @@
     <ClInclude Include="delaunator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vec2Hash.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

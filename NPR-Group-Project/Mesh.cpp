@@ -56,10 +56,11 @@ void Mesh::draw(Shader* shader, const mat4& parentTx) const {
 
     //printf("drawing mesh\n");
     //shader.use();
+    //printf("\n\nmesh.draw()\nabout to set mat4s\n");
     mat4 tx = parentTx * this->transform;
     shader->setMatFour("model", tx);
     shader->setMatFour("normalMatrix", glm::transpose(glm::inverse(tx)));
-
+    //printf("set mat4s\nabout to set textures\n");
 
 
 
@@ -75,20 +76,28 @@ void Mesh::draw(Shader* shader, const mat4& parentTx) const {
 
 
 
+    if (diffuse.id == 0) {
 
+        return;
+    }
 
-
+    //printf("step 1:\n");
     glActiveTexture(GL_TEXTURE0 + 0);
+    //printf("step 2:%p\n", diffuse.id);
     glBindTexture(GL_TEXTURE_2D, diffuse.id);
+    //printf("step 3:\n");
     shader->setInt("diffuseSampler", 0);
 
+    //printf("step 4:\n");
     glActiveTexture(GL_TEXTURE0 + 1);
+    //printf("step 5:\n");
     glBindTexture(GL_TEXTURE_2D, specular.id);
+    //printf("step 6:\n");
     shader->setInt("specularSampler", 1);
 
     glActiveTexture(GL_TEXTURE0);
 
-
+    //printf("set textures, about to do draw calls\n");
     //unsigned int diffuseNr = 1;
     //unsigned int specularNr = 1;
     //for (unsigned int i = 0; i < textures.size(); i++)
@@ -109,9 +118,11 @@ void Mesh::draw(Shader* shader, const mat4& parentTx) const {
 
     // draw mesh
     // 
+    //printf("step a:\n");
     glBindVertexArray(VAO);
-
+    //printf("step b:\n");
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    //printf("step c:\n");
     glBindVertexArray(0);
 }
 

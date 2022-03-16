@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <set>
 
 #include "glad/glad.h"
@@ -13,7 +14,7 @@
 #include "Model.hpp"
 #include "Screen.hpp"
 #include "DTriangle.hpp"
-
+#include "vec2Hash.hpp"
 #include "delaunator.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -32,7 +33,7 @@ double lastFrame = 0.0f; // Time of last frame
 int screenX = 1000;
 int screenY = 1000;
 
-int numberOfPoints = 200;
+int numberOfPoints = 8;
 
 
 //drawn framebuffer texture
@@ -86,6 +87,18 @@ void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, dft.RBO);
 }
 
+void GLAPIENTRY MessageCallback(GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar* message,
+    const void* userParam)
+{
+    fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+        (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+        type, severity, message);
+}
 
 
 void genFrameBuffers() {
@@ -183,6 +196,8 @@ vec4 calculatePolarPoints(const vec3& point, const vec2& polarCenter) {
     return vec4(point.x, point.y, r, theta);
 }
 
+
+
 //TODO: use texelfetch not texture()
 unordered_map<string, Shader*> shaders;
 Shader* shader;
@@ -193,6 +208,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
     glfwWindowHint(GLFW_SRGB_CAPABLE, 1);
     glfwWindowHint(GLFW_SAMPLES, 16);
     GLFWwindow* window = glfwCreateWindow(1000, 1000, "Title Goes here", NULL, NULL);
@@ -221,7 +237,11 @@ int main()
     //glEnable(GL_CULL_FACE);
     glDisable(GL_CULL_FACE);
     glEnable(GL_FRAMEBUFFER_SRGB);
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+
+
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glDebugMessageCallback(MessageCallback, 0);
 
     Screen flatscreen;
 
@@ -290,6 +310,8 @@ int main()
     float frameTimes[30](0);
     int lastSecondFrameCount = -1;
 
+    printf("begining of draw loop\n");
+
     while (!glfwWindowShouldClose(window)) {
         double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -308,23 +330,19 @@ int main()
         frameTimes[frameCounter % 30] = 1.0f / float(deltaTime);
 
 
+
+
+
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
-        /*shader = shaders["object"];
-        shader.use();
-        shader.setMatFour("projection", projection);
-        shader.setMatFour("view", view);
-        m.draw(shader);*/
 
         float sinit = (sin(currentFrame / 5.0f));
         float cosit = (cos(currentFrame / 5.0f));
         float ratio = (float)screenX / (float)screenY;
 
-        vec3 eye = vec3(sinit * 5.0f, 2.0f, cosit * 5.0f);
-        //vec3 eye = vec3(5.0, 5.0, 5.0);
+        //vec3 eye = vec3(sinit * 5.0f, 2.0f, cosit * 5.0f);
+        vec3 eye = vec3(5.0, 5.0, 5.0);
         mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
 
 
@@ -333,6 +351,7 @@ int main()
         if (stageUpTo > -1) {
             if (stageUpTo > 0) glBindFramebuffer(GL_FRAMEBUFFER, depthDFT.framebuffer);
             if (stageUpTo == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage 0\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["depth"];
@@ -347,6 +366,7 @@ int main()
                 shader->setFloat("far", newFar);
                 m->draw(shader);
             }
+
         }
         
         //draw the normal (really the direction) of the object
@@ -354,6 +374,7 @@ int main()
         if (stageUpTo > 0) {
             if (stageUpTo > 1) glBindFramebuffer(GL_FRAMEBUFFER, normalDFT.framebuffer);
             if (stageUpTo == 1) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage 2\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["normal"];
@@ -375,6 +396,7 @@ int main()
         if (stageUpTo > 1) {
             if (stageUpTo > 2) glBindFramebuffer(GL_FRAMEBUFFER, colorDFT.framebuffer);
             if (stageUpTo == 2) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage 2\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["object"];
@@ -402,6 +424,7 @@ int main()
         if (stageUpTo > 2) {
             if (stageUpTo > 3) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
             if (stageUpTo == 3) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage 3\n");
             glClearColor(0.05f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["line"];
@@ -428,7 +451,8 @@ int main()
         if (stageUpTo > 3) {
             if (stageUpTo > 4) glBindFramebuffer(GL_FRAMEBUFFER, pointDFT.framebuffer);
             if (stageUpTo == 4) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+            printf("doing stage 4\n");
+            glClearColor(0.00f, 0.50f, 0.00f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["point"];
             shader->use();
@@ -452,6 +476,8 @@ int main()
 
         if (stageUpTo == 5) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            printf("doing stage 5\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["coord"];
@@ -475,6 +501,7 @@ int main()
             if (stageUpTo > 5) {
                 if (stageUpTo > 6) glBindFramebuffer(GL_FRAMEBUFFER, stage1.framebuffer);
                 if (stageUpTo == 6) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                printf("doing stage 6\n");
 
                 glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -497,6 +524,7 @@ int main()
                 if (stageUpTo > 7) glBindFramebuffer(GL_FRAMEBUFFER, stage2.framebuffer);
                 if (stageUpTo == 7) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+                printf("doing stage 7\n");
                 glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -522,6 +550,7 @@ int main()
             if (stageUpTo > 7) {
                 if (stageUpTo > 8) glBindFramebuffer(GL_FRAMEBUFFER, stage3.framebuffer);
                 if (stageUpTo == 8) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                printf("doing stage 8\n");
                 glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -550,6 +579,7 @@ int main()
             //stage 4 draw triangles from the 3 points   
             if (stageUpTo > 8)
             {
+                printf("doing stage 9\n");
                 /*glBindFramebuffer(GL_FRAMEBUFFER, stage4Framebuffer);
                 glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 
@@ -622,59 +652,114 @@ int main()
         }
         if (shaderMode == 1) {
 
-            glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
+            printf("begining of shader mode 1\n");
+
+            if (stageUpTo > 5) {
+
+                printf("doing stage 6\n");
+                glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
+
+                //printf("\n\nnew frame============\n");
+
+                unordered_set <dvec2> pointsSet;
+
+                for (size_t i = 0; i < numberOfPoints * 2; i+=2) {
+                    printf("inserting %f and %f into pointsSet\n", pointTexturePixels[i], pointTexturePixels[i + 1]);
+                    pointsSet.insert(dvec2(pointTexturePixels[i], pointTexturePixels[i+1]));
+                }
+
+                vector<double> points;// = vector(pointsSet);
+
+                for (dvec2 x : pointsSet) {
+                    points.push_back(x.x);
+                    points.push_back(x.y);
+                }
+                //points.insert(points.end(), pointsSet.begin(), pointsSet.end());
+
+                printf("delaunating points: \n");
+                for (size_t i = 0; i < points.size(); i+=2) {
+                    printf("%f, %f\n", points[i], points[i + 1]);
+                }
+
+                delaunator::Delaunator d = delaunator::Delaunator(points);
 
 
-            for (int i = 0; i < numberOfPoints; i+=3) {
-                printf("%f, %f, %f\n", pointTexturePixels[i], pointTexturePixels[i + 1], pointTexturePixels[i + 2]);
+
+
+                vector<float> verts;
+                vector<unsigned int> indexes;
+
+                for (size_t i = 0; i < d.coords.size(); i += 6) {
+                    float centX = (d.coords[i + 0] + d.coords[i + 2] + d.coords[i + 4])/3.0;
+                    float centY = (d.coords[i + 1] + d.coords[i + 3] + d.coords[i + 5])/3.0;
+
+                    verts.push_back(d.coords[i + 0]);
+                    verts.push_back(d.coords[i + 1]);
+                    verts.push_back(centX);
+                    verts.push_back(centY);
+                    verts.push_back(d.coords[i + 2]);
+                    verts.push_back(d.coords[i + 3]);
+                    verts.push_back(centX);
+                    verts.push_back(centY);
+                    verts.push_back(d.coords[i + 4]);
+                    verts.push_back(d.coords[i + 5]);
+                    verts.push_back(centX);
+                    verts.push_back(centY);
+                }
+
+
+
+                for (size_t i = 0; i < d.triangles.size(); i++) {
+                    indexes.push_back(d.triangles[i]);
+                }
+
+                
+
+
+                glGenVertexArrays(1, &triangleVAO);
+                glBindVertexArray(triangleVAO);
+
+                glGenBuffers(1, &triangleVBO);
+                glGenBuffers(1, &triangleEBO);
+
+
+
+                glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+                glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(verts[0]), verts.data(), GL_STATIC_DRAW);
+
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEBO);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(indexes[0]), indexes.data(), GL_STATIC_DRAW);
+
+
+                glEnableVertexAttribArray(0);
+                glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4Ui64, (void*)0);
+
+                glEnableVertexAttribArray(1);
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4Ui64, (void*)(sizeof(float) * 2Ui64));
+
+                glBindVertexArray(0);
+
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                shader = shaders["thirdPartyDelaunay"];
+                shader->use();
+
+                shader->setMatFour("projection", ortho);
+
+                glDisable(GL_CULL_FACE);
+                glDisable(GL_DEPTH_TEST);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glBindVertexArray(triangleVAO);
+                glDrawElements(GL_TRIANGLES, indexes.size(), GL_UNSIGNED_INT, 0);
+
+
+                glEnable(GL_CULL_FACE);
+                glEnable(GL_DEPTH_TEST);
+
             }
-            vector<double> points;
-            for (int i = 0; i < numberOfPoints * 2; i++) {
-                points.push_back(pointTexturePixels[i]);
-            }
-
-
-            auto d = delaunator::Delaunator(points);
-
-            printf("printing out triangles\n");
-            for (int i = 0; i < d.triangles.size(); i+=3) {
-                printf("%f, %f, %f\n", d.coords.at(d.triangles.at(i)), d.coords.at(d.triangles.at(i+1)), d.coords.at(d.triangles.at(i + 2)));
-            }
-            exit(-1);
-            
-
-            glGenVertexArrays(1, &triangleVAO);
-            glGenBuffers(1, &triangleVBO);
-            glGenBuffers(1, &triangleEBO);
-            glBindVertexArray(triangleVAO);
-
-            glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
-            glBufferData(GL_ARRAY_BUFFER, d.coords.size(), d.coords.data(), GL_STATIC_DRAW);
-
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEBO);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, d.triangles.size(), d.triangles.data(), GL_STATIC_DRAW);
-
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
-            //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fakeEBO);
-            
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            shader = shaders["thirdPartyDelaunay"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
-
-            uint32_t colorLocationThird = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocationThird, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
-            printf("drawing\n");
-            glDrawElements(GL_TRIANGLES, d.triangles.size(), GL_UNSIGNED_INT, 0);
-
 
             /*if (stageUpTo > 5) {
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -702,5 +787,6 @@ int main()
         processInput(window);
         glfwSwapBuffers(window);
         glfwPollEvents();
+        //cin.get();
     }
 }
