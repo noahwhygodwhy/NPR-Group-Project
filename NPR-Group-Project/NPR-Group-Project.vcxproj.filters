@@ -116,70 +116,28 @@
     <None Include="simpleFragShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="pointFragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="pointVertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="tempPointDisplayFragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="tempPointDisplayVertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Stage5VertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage1VertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage2FragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage2VertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage3FragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage3VertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage4FragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage4VertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage5FragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="Stage1FragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="veronPointVertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="veronPointFragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="veronoiVertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="veronoiFragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
     <None Include="KuwaharaFragShader.glsl">
       <Filter>Shaders\Paint Shaders</Filter>
     </None>
     <None Include="KuwaharaVertShader.glsl">
       <Filter>Shaders\Paint Shaders</Filter>
     </None>
-    <None Include="thirdVertShader.glsl">
+    <None Include="pointVertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="pointFragShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="tempPointDisplayFragShader.glsl">
       <Filter>Shaders\Triangle Shaders</Filter>
     </None>
     <None Include="thirdFragShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="thirdVertShader.glsl">
+      <Filter>Shaders\Triangle Shaders</Filter>
+    </None>
+    <None Include="tempPointDisplayVertShader.glsl">
       <Filter>Shaders\Triangle Shaders</Filter>
     </None>
   </ItemGroup>

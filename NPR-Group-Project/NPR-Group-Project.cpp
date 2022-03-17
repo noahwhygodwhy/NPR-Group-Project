@@ -20,12 +20,26 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+enum Stages {
+    DEPTH = 0,
+    NORMALS,
+    COLOR,
+    LINE,
+    POINTS,
+    STATIC,
+    TRIANGLES,
+
+    MAX_STAGE
+
+
+};
+
 using namespace std;
 using namespace glm;
 
 int shaderMode = 1;
-int stageUpTo = 1;
-constexpr int maxStage = 9;
+Stages stageUpTo = DEPTH;
+//constexpr int maxStage = 9;
 
 double deltaTime = 0.0f;	// Time between current frame and last frame
 double lastFrame = 0.0f; // Time of last frame
@@ -168,17 +182,17 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 {
     if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
 
-        stageUpTo = (stageUpTo + 1) % (maxStage+1);
+        stageUpTo = Stages((stageUpTo + 1) % (MAX_STAGE));
         if (stageUpTo < 0) {
-            stageUpTo = maxStage;
+            stageUpTo = Stages(MAX_STAGE-1);
         }
         printf("stageupto: %i\n", stageUpTo);
     }
 
     if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
-        stageUpTo = (stageUpTo - 1) % (maxStage+1);
+        stageUpTo = Stages((stageUpTo - 1) % (MAX_STAGE));
         if (stageUpTo < 0) {
-            stageUpTo = maxStage;
+            stageUpTo = Stages(MAX_STAGE-1);
         }
         printf("stageupto: %i\n", stageUpTo);
     }
@@ -246,8 +260,8 @@ int main()
     Screen flatscreen;
 
     vector<Model*> models;
-    //models.push_back(new Model("backpack"));
-    models.push_back(new Model("dedust"));
+    models.push_back(new Model("backpack"));
+    //models.push_back(new Model("dedust"));
 
     shaders["object"] = new Shader("object.vert", "object.frag");
     shaders["regular"] = new Shader("vertShader.glsl", "fragShader.glsl");
@@ -342,18 +356,18 @@ int main()
         float cosit = (cos(currentFrame / 5.0f));
         float ratio = (float)screenX / (float)screenY;
 
-        //vec3 eye = vec3(sinit * 5.0f, 5.0f, cosit * 5.0f);
-        vec3 eye = vec3(5.0f, 200.0f, 5.0f);
+        vec3 eye = vec3(sinit * 5.0f, 5.0f, cosit * 5.0f);
+        //vec3 eye = vec3(5.0f, 200.0f, 5.0f);//for dedust
         //vec3 eye = vec3(5.0, 5.0, 5.0);
         mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
 
 
 
-        //Draw the depth of the object
-        if (stageUpTo > -1) {
-            if (stageUpTo > 0) glBindFramebuffer(GL_FRAMEBUFFER, depthDFT.framebuffer);
-            if (stageUpTo == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            //printf("doing stage 0\n");
+ //Draw the depth of the object
+        if (stageUpTo >= DEPTH) {
+            if (stageUpTo > DEPTH) glBindFramebuffer(GL_FRAMEBUFFER, depthDFT.framebuffer);
+            if (stageUpTo == DEPTH) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage DEPTH\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["depth"];
@@ -371,12 +385,12 @@ int main()
 
         }
         
-        //draw the normal (really the direction) of the object
+//draw the normal (really the direction) of the object
 
-        if (stageUpTo > 0) {
-            if (stageUpTo > 1) glBindFramebuffer(GL_FRAMEBUFFER, normalDFT.framebuffer);
-            if (stageUpTo == 1) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            //printf("doing stage 2\n");
+        if (stageUpTo >= NORMALS) {
+            if (stageUpTo > NORMALS) glBindFramebuffer(GL_FRAMEBUFFER, normalDFT.framebuffer);
+            if (stageUpTo == NORMALS) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage NORMALS\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["normal"];
@@ -393,12 +407,12 @@ int main()
             } 
         }
 
-        //draw the object regularly,like it would be drawn normally, but i can't use the word normal
+//draw the object regularly,like it would be drawn normally, but i can't use the word normal
 
-        if (stageUpTo > 1) {
-            if (stageUpTo > 2) glBindFramebuffer(GL_FRAMEBUFFER, colorDFT.framebuffer);
-            if (stageUpTo == 2) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            //printf("doing stage 2\n");
+        if (stageUpTo >=COLOR) {
+            if (stageUpTo > COLOR) glBindFramebuffer(GL_FRAMEBUFFER, colorDFT.framebuffer);
+            if (stageUpTo == COLOR) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage COLOR\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["object"];
@@ -411,22 +425,15 @@ int main()
                 shader->setMatFour("projection", glm::perspective(glm::radians(70.0f), ratio, glm::max(newNear, 0.01f), newFar));
                 shader->setFloat("near", newNear);
                 shader->setFloat("far", newFar);
-
-                //TODO: you have to give the model or mesh it's texture, and indicate to the draw function that it needs to do this only this time
-                //take a look at collision test bed
-
                 m->draw(shader);
             }
         }
 
-
-        //draw a combinatino of the previous framebuffers
-
 //draws edges, white 
-        if (stageUpTo > 2) {
-            if (stageUpTo > 3) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
-            if (stageUpTo == 3) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            //printf("doing stage 3\n");
+        if (stageUpTo >= LINE) {
+            if (stageUpTo > LINE) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
+            if (stageUpTo == LINE) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage LINE\n");
             glClearColor(0.01f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["line"];
@@ -450,9 +457,9 @@ int main()
         }
         
  //use line data to create a texture of coordinates distributed weighted twoards the edges of objects
-        if (stageUpTo > 3) {
-            if (stageUpTo > 4) glBindFramebuffer(GL_FRAMEBUFFER, pointDFT.framebuffer);
-            if (stageUpTo == 4) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        if (stageUpTo >= POINTS) {
+            if (stageUpTo > POINTS) glBindFramebuffer(GL_FRAMEBUFFER, pointDFT.framebuffer);
+            if (stageUpTo == POINTS) glBindFramebuffer(GL_FRAMEBUFFER, 0);
             //printf("doing stage 4\n");
             glClearColor(0.00f, 0.50f, 0.00f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -460,26 +467,20 @@ int main()
             shader->use();
             shader->setVecThree("eyePos", eye);
             shader->setMatFour("projection", ortho);
-            //shader.setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
-            //shader.setVecTwo("screenResolution", vec2(screenX, screenY));
-            //shader.setMatFour("view", view);
 
             uint32_t lineLocation = glGetUniformLocation(shader->program, "lineTexture");
-
             glUniform1i(lineLocation, 0);
-
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, lineDFT.texture);
 
             flatscreen.draw(shader);
         }
 
-//TEMPORARY --- draws the theoretical points to th screen to confirm that they're in correct locations
+//draws the theoretical points to th screen to confirm that they're in correct locations
 
-        if (stageUpTo == 5) {
+        if (stageUpTo == STATIC) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-            //printf("doing stage 5\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["coord"];
@@ -497,337 +498,88 @@ int main()
             glDrawArrays(GL_POINTS, 0, numberOfPoints);
             glBindVertexArray(0);
         }
+        if (stageUpTo >= TRIANGLES) {
 
-        if (shaderMode == 0) {
-            //draw veronoi diagram as part of stage 1 //TODO: do this better/faster/harder/stronger
-            if (stageUpTo > 5) {
-                if (stageUpTo > 6) glBindFramebuffer(GL_FRAMEBUFFER, stage1.framebuffer);
-                if (stageUpTo == 6) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                //printf("doing stage 6\n");
+            glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
+            unordered_set <dvec2> pointsSet;
 
-                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                shader = shaders["stage1"];
-                shader->use();
-                shader->setMatFour("projection", ortho);
-                shader->setInt("width", screenX);
-
-                uint32_t pointLocation = glGetUniformLocation(shader->program, "pointTexture");
-                glUniform1i(pointLocation, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
-
-                flatscreen.drawInstances(shader, numberOfPoints);
+            for (size_t i = 0; i < numberOfPoints * 2; i+=2) {
+                pointsSet.insert(dvec2(pointTexturePixels[i], pointTexturePixels[i+1]));
             }
 
-            //stage 2 of the triangulation
+            vector<double> points;
 
-            if (stageUpTo > 6) {
-                if (stageUpTo > 7) glBindFramebuffer(GL_FRAMEBUFFER, stage2.framebuffer);
-                if (stageUpTo == 7) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                //printf("doing stage 7\n");
-                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                shader = shaders["stage2"];
-                shader->use();
-                shader->setMatFour("projection", ortho);
-
-
-                uint32_t stage2PointLocation = glGetUniformLocation(shader->program, "pointTexture");
-                glUniform1i(stage2PointLocation, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
-
-                uint32_t stage1Location = glGetUniformLocation(shader->program, "stage1Texture");
-                glUniform1i(stage1Location, 1);
-                glActiveTexture(GL_TEXTURE0 + 1);
-                glBindTexture(GL_TEXTURE_2D, stage1.texture);
-
-                flatscreen.drawInstances(shader, numberOfPoints);
+            for (dvec2 x : pointsSet) {
+                points.push_back(x.x);
+                points.push_back(x.y);
             }
 
-            //stage 3 of the triangulation
-            if (stageUpTo > 7) {
-                if (stageUpTo > 8) glBindFramebuffer(GL_FRAMEBUFFER, stage3.framebuffer);
-                if (stageUpTo == 8) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                //printf("doing stage 8\n");
-                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+            delaunator::Delaunator d = delaunator::Delaunator(points);
 
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                shader = shaders["stage3"];
-                shader->use();
-                shader->setMatFour("projection", ortho);
-
-                uint32_t stage1Location2 = glGetUniformLocation(shader->program, "stage1Texture");
-                glUniform1i(stage1Location2, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, stage1.texture);
-
-                uint32_t stage2Location = glGetUniformLocation(shader->program, "stage2Texture");
-                glUniform1i(stage2Location, 1);
-                glActiveTexture(GL_TEXTURE0 + 1);
-                glBindTexture(GL_TEXTURE_2D, stage2.texture);
-
-                uint32_t pointLocation3 = glGetUniformLocation(shader->program, "pointTexture");
-                glUniform1i(pointLocation3, 2);
-                glActiveTexture(GL_TEXTURE0 + 2);
-                glBindTexture(GL_TEXTURE_2D, pointDFT.texture);
-
-                flatscreen.drawInstances(shader, numberOfPoints);
-            }
-            //stage 4 draw triangles from the 3 points   
-            if (stageUpTo > 8)
-            {
-                //printf("doing stage 9\n");
-                /*glBindFramebuffer(GL_FRAMEBUFFER, stage4Framebuffer);
-                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
-
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                shader = shaders["stage4"];
-                shader->use();
-                shader->setMatFour("projection", ortho);
-
-                uint32_t stage1Location4 = glGetUniformLocation(shader->program, "stage1Texture");
-                glUniform1i(stage1Location4, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, stage1.texture);
-
-                uint32_t stage2Location4 = glGetUniformLocation(shader->program, "stage2Texture");
-                glUniform1i(stage2Location4, 1);
-                glActiveTexture(GL_TEXTURE0 + 1);
-                glBindTexture(GL_TEXTURE_2D, stage2.texture);
-
-                uint32_t stage3Location4 = glGetUniformLocation(shader->program, "stage3Texture");
-                glUniform1i(stage3Location4, 2);
-                glActiveTexture(GL_TEXTURE0 + 2);
-                glBindTexture(GL_TEXTURE_2D, stage3.texture);
-
-                /*uint32_t colorLocation4 = glGetUniformLocation(shader->program, "colorTexture");
-                glUniform1i(colorLocation4, 3);
-                glActiveTexture(GL_TEXTURE0 + 3);
-                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
-
-                flatscreen.drawInstances(shader, numberOfPoints);*/
+            vector<float> verts;
+            vector<unsigned int> indexes;
 
 
-                //stage5 drawing the 
 
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+            for (size_t i = 0; i < d.triangles.size(); i += 3) {
+                size_t v1 = d.triangles[i + 0];
+                size_t v2 = d.triangles[i + 1];
+                size_t v3 = d.triangles[i + 2];
 
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                float centX = (d.coords[(v1 * 2) + 0] + d.coords[(v2 * 2) + 0] + d.coords[(v3 * 2) + 0]) / 3.0;
+                float centY = (d.coords[(v1 * 2) + 1] + d.coords[(v2 * 2) + 1] + d.coords[(v3 * 2) + 1]) / 3.0;
 
-                shader = shaders["stage5"];
-                shader->use();
-                shader->setMatFour("projection", ortho);
-
-                uint32_t stage1Location5 = glGetUniformLocation(shader->program, "stage4Texture1");
-                glUniform1i(stage1Location5, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, stage4Texture1);
-                //glBindTexture(GL_TEXTURE_2D, stage1.texture);
-
-                uint32_t stage2Location5 = glGetUniformLocation(shader->program, "stage4Texture2");
-                glUniform1i(stage2Location5, 1);
-                glActiveTexture(GL_TEXTURE0 + 1);
-                glBindTexture(GL_TEXTURE_2D, stage4Texture2);
-                //glBindTexture(GL_TEXTURE_2D, stage2.texture);
-
-                uint32_t stage3Location5 = glGetUniformLocation(shader->program, "stage4Texture3");
-                glUniform1i(stage3Location5, 2);
-                glActiveTexture(GL_TEXTURE0 + 2);
-                glBindTexture(GL_TEXTURE_2D, stage4Texture3);
-                //glBindTexture(GL_TEXTURE_2D, stage3.texture);
-
-                uint32_t colorLocation5 = glGetUniformLocation(shader->program, "colorTexture");
-                glUniform1i(colorLocation5, 3);
-                glActiveTexture(GL_TEXTURE0 + 3);
-                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
-
-                flatscreen.draw(shader);
-
-            }
-        }
-        if (shaderMode == 1) {
-
-            //printf("begining of shader mode 1\n");
-
-            if (stageUpTo > 5) {
-
-                //printf("doing stage 6\n");
-                glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
-
-                //printf("\n\nnew frame============\n");
-
-                unordered_set <dvec2> pointsSet;
-
-                for (size_t i = 0; i < numberOfPoints * 2; i+=2) {
-                    //printf("inserting %f and %f into pointsSet\n", pointTexturePixels[i], pointTexturePixels[i + 1]);
-                    pointsSet.insert(dvec2(pointTexturePixels[i], pointTexturePixels[i+1]));
-                }
-
-                vector<double> points;// = vector(pointsSet);
-
-                for (dvec2 x : pointsSet) {
-                    points.push_back(x.x);
-                    points.push_back(x.y);
-                }
-                //points.insert(points.end(), pointsSet.begin(), pointsSet.end());
-
-                //printf("delaunating points: \n");
-                //for (size_t i = 0; i < points.size(); i+=2) {
-                //    printf("%f, %f\n", points[i], points[i + 1]);
-                //}
-
-                delaunator::Delaunator d = delaunator::Delaunator(points);
+                verts.push_back(d.coords[(v1 * 2) + 0]);
+                verts.push_back(d.coords[(v1 * 2) + 1]);
+                verts.push_back(centX);
+                verts.push_back(centY);
+                verts.push_back(d.coords[(v2 * 2) + 0]);
+                verts.push_back(d.coords[(v2 * 2) + 1]);
+                verts.push_back(centX);
+                verts.push_back(centY);
+                verts.push_back(d.coords[(v3 * 2) + 0]);
+                verts.push_back(d.coords[(v3 * 2) + 1]);
+                verts.push_back(centX);
+                verts.push_back(centY);
                 
-
-
-
-                vector<float> verts;
-                vector<unsigned int> indexes;
-
-                /*for (size_t i = 0; i < d.coords.size(); i += 6) {
-                    float centX = (d.coords[i + 0] + d.coords[i + 2] + d.coords[i + 4])/3.0;
-                    float centY = (d.coords[i + 1] + d.coords[i + 3] + d.coords[i + 5])/3.0;
-
-                    verts.push_back(d.coords[i + 0]);
-                    verts.push_back(d.coords[i + 1]);
-                    verts.push_back(centX);
-                    verts.push_back(centY);
-                    verts.push_back(d.coords[i + 2]);
-                    verts.push_back(d.coords[i + 3]);
-                    verts.push_back(centX);
-                    verts.push_back(centY);
-                    verts.push_back(d.coords[i + 4]);
-                    verts.push_back(d.coords[i + 5]);
-                    verts.push_back(centX);
-                    verts.push_back(centY);
-                }*/
-
-
-                for (size_t i = 0; i < d.triangles.size(); i += 3) {
-
-
-
-
-                    size_t v1 = d.triangles[i + 0];
-                    size_t v2 = d.triangles[i + 1];
-                    size_t v3 = d.triangles[i + 2];
-
-                    float centX = (d.coords[(v1 * 2) + 0] + d.coords[(v2 * 2) + 0] + d.coords[(v3 * 2) + 0]) / 3.0;
-                    float centY = (d.coords[(v1 * 2) + 1] + d.coords[(v2 * 2) + 1] + d.coords[(v3 * 2) + 1]) / 3.0;
-
-                    verts.push_back(d.coords[(v1 * 2) + 0]);
-                    verts.push_back(d.coords[(v1 * 2) + 1]);
-                    verts.push_back(centX);
-                    verts.push_back(centY);
-                    verts.push_back(d.coords[(v2 * 2) + 0]);
-                    verts.push_back(d.coords[(v2 * 2) + 1]);
-                    verts.push_back(centX);
-                    verts.push_back(centY);
-                    verts.push_back(d.coords[(v3 * 2) + 0]);
-                    verts.push_back(d.coords[(v3 * 2) + 1]);
-                    verts.push_back(centX);
-                    verts.push_back(centY);
-                
-                }
-
-
-                /*printf("vertices: \n");
-                for (size_t i = 0; i < verts.size(); i += 4) {
-                    printf("%f, %f, %f, %f\n", verts[i], verts[i + 1], verts[i + 2], verts[i + 3]);
-                }*/
-                /*printf("vertices: \n");
-                for (size_t i = 0; i < verts.size(); i += 2) {
-                    printf("%f, %f\n", verts[i], verts[i + 1]);
-                }
-
-                cin.get();*/
-                /*for (size_t i = 0; i < d.triangles.size(); i++) {
-                    indexes.push_back(d.triangles[i]);
-                }*/
-
-                
-
-
-                glGenVertexArrays(1, &triangleVAO);
-                glBindVertexArray(triangleVAO);
-
-                glGenBuffers(1, &triangleVBO);
-                glGenBuffers(1, &triangleEBO);
-
-
-
-                glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
-                glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(verts[0]), verts.data(), GL_STATIC_DRAW);
-
-                //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEBO);
-                //glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(indexes[0]), indexes.data(), GL_STATIC_DRAW);
-
-
-                glEnableVertexAttribArray(0);
-                glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4Ui64, (void*)0);
-
-                glEnableVertexAttribArray(1);
-                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4Ui64, (void*)(sizeof(float) * 2Ui64));
-
-                glBindVertexArray(0);
-
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
-
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                shader = shaders["thirdPartyDelaunay"];
-                shader->use();
-
-                shader->setMatFour("projection", ortho);
-
-                uint32_t colorLocationTri = glGetUniformLocation(shader->program, "colorTexture");
-                glUniform1i(colorLocationTri, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
-
-                //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-                glBindVertexArray(triangleVAO);
-                glDrawArrays(GL_TRIANGLES, 0, verts.size());
-                //glDrawElements(GL_TRIANGLES, indexes.size(), GL_UNSIGNED_INT, 0);
-
-
-                //glDisable(GL_CULL_FACE);
-               // glDisable(GL_DEPTH_TEST);
-                //glEnable(GL_CULL_FACE);
-                //glEnable(GL_DEPTH_TEST);
-
             }
 
-            /*if (stageUpTo > 5) {
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+            glGenVertexArrays(1, &triangleVAO);
+            glBindVertexArray(triangleVAO);
 
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glGenBuffers(1, &triangleVBO);
+            glGenBuffers(1, &triangleEBO);
 
-                shader = shaders["kuwahara"];
-                shader->use();
-                shader->setMatFour("projection", ortho);
-                shader->setInt("kernalWidth", 5);
-                shader->setInt("kernalHeight", 3);
-                shader->setInt("width", screenX);
-                shader->setInt("height", screenY);
+            glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+            glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(verts[0]), verts.data(), GL_STATIC_DRAW);
 
-                uint32_t colorLocation6 = glGetUniformLocation(shader->program, "colorTexture");
-                glUniform1i(colorLocation6, 0);
-                glActiveTexture(GL_TEXTURE0 + 0);
-                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4Ui64, (void*)0);
 
-                flatscreen.draw(shader);
-            }*/
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4Ui64, (void*)(sizeof(float) * 2Ui64));
+
+            glBindVertexArray(0);
+
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader = shaders["thirdPartyDelaunay"];
+            shader->use();
+
+            shader->setMatFour("projection", ortho);
+
+            uint32_t colorLocationTri = glGetUniformLocation(shader->program, "colorTexture");
+            glUniform1i(colorLocationTri, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+
+
+            glBindVertexArray(triangleVAO);
+            glDrawArrays(GL_TRIANGLES, 0, verts.size());
+
         }
 
         processInput(window);
