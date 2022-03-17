@@ -10,5 +10,8 @@ out vec2 fraguv;
 void main()
 {
     fraguv = cent;
+
+    //vertNumber = float(gl_VertexID)/24.0;
+
     gl_Position = projection * vec4(aPos, 0.0f, 1.0f);
 }

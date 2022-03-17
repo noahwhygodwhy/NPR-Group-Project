@@ -24,7 +24,7 @@ using namespace std;
 using namespace glm;
 
 int shaderMode = 1;
-int stageUpTo = 6;
+int stageUpTo = 1;
 constexpr int maxStage = 9;
 
 double deltaTime = 0.0f;	// Time between current frame and last frame
@@ -33,7 +33,7 @@ double lastFrame = 0.0f; // Time of last frame
 int screenX = 1000;
 int screenY = 1000;
 
-int numberOfPoints = 8;
+int numberOfPoints = 500;
 
 
 //drawn framebuffer texture
@@ -246,7 +246,8 @@ int main()
     Screen flatscreen;
 
     vector<Model*> models;
-    models.push_back(new Model("backpack"));
+    //models.push_back(new Model("backpack"));
+    models.push_back(new Model("dedust"));
 
     shaders["object"] = new Shader("object.vert", "object.frag");
     shaders["regular"] = new Shader("vertShader.glsl", "fragShader.glsl");
@@ -341,8 +342,9 @@ int main()
         float cosit = (cos(currentFrame / 5.0f));
         float ratio = (float)screenX / (float)screenY;
 
-        //vec3 eye = vec3(sinit * 5.0f, 2.0f, cosit * 5.0f);
-        vec3 eye = vec3(5.0, 5.0, 5.0);
+        //vec3 eye = vec3(sinit * 5.0f, 5.0f, cosit * 5.0f);
+        vec3 eye = vec3(5.0f, 200.0f, 5.0f);
+        //vec3 eye = vec3(5.0, 5.0, 5.0);
         mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
 
 
@@ -351,7 +353,7 @@ int main()
         if (stageUpTo > -1) {
             if (stageUpTo > 0) glBindFramebuffer(GL_FRAMEBUFFER, depthDFT.framebuffer);
             if (stageUpTo == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage 0\n");
+            //printf("doing stage 0\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["depth"];
@@ -361,7 +363,7 @@ int main()
             for (Model* m : models) {
                 float newNear = m->getNear(eye);
                 float newFar = m->getFar(eye);
-                shader->setMatFour("projection", glm::perspective(glm::radians(70.0f), ratio, glm::max(newNear, 0.01f), newFar));
+                shader->setMatFour("projection", glm::perspective(glm::radians(70.0f), ratio, glm::max(newNear, 0.01f), glm::min(newFar, 1.0f)));
                 shader->setFloat("near", newNear);
                 shader->setFloat("far", newFar);
                 m->draw(shader);
@@ -374,7 +376,7 @@ int main()
         if (stageUpTo > 0) {
             if (stageUpTo > 1) glBindFramebuffer(GL_FRAMEBUFFER, normalDFT.framebuffer);
             if (stageUpTo == 1) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage 2\n");
+            //printf("doing stage 2\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["normal"];
@@ -396,7 +398,7 @@ int main()
         if (stageUpTo > 1) {
             if (stageUpTo > 2) glBindFramebuffer(GL_FRAMEBUFFER, colorDFT.framebuffer);
             if (stageUpTo == 2) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage 2\n");
+            //printf("doing stage 2\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["object"];
@@ -424,8 +426,8 @@ int main()
         if (stageUpTo > 2) {
             if (stageUpTo > 3) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
             if (stageUpTo == 3) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage 3\n");
-            glClearColor(0.05f, 0.0f, 0.0f, 1.0f);
+            //printf("doing stage 3\n");
+            glClearColor(0.01f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["line"];
             shader->use();
@@ -451,7 +453,7 @@ int main()
         if (stageUpTo > 3) {
             if (stageUpTo > 4) glBindFramebuffer(GL_FRAMEBUFFER, pointDFT.framebuffer);
             if (stageUpTo == 4) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage 4\n");
+            //printf("doing stage 4\n");
             glClearColor(0.00f, 0.50f, 0.00f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["point"];
@@ -477,7 +479,7 @@ int main()
         if (stageUpTo == 5) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-            printf("doing stage 5\n");
+            //printf("doing stage 5\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["coord"];
@@ -501,7 +503,7 @@ int main()
             if (stageUpTo > 5) {
                 if (stageUpTo > 6) glBindFramebuffer(GL_FRAMEBUFFER, stage1.framebuffer);
                 if (stageUpTo == 6) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                printf("doing stage 6\n");
+                //printf("doing stage 6\n");
 
                 glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -524,7 +526,7 @@ int main()
                 if (stageUpTo > 7) glBindFramebuffer(GL_FRAMEBUFFER, stage2.framebuffer);
                 if (stageUpTo == 7) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-                printf("doing stage 7\n");
+                //printf("doing stage 7\n");
                 glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -550,7 +552,7 @@ int main()
             if (stageUpTo > 7) {
                 if (stageUpTo > 8) glBindFramebuffer(GL_FRAMEBUFFER, stage3.framebuffer);
                 if (stageUpTo == 8) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                printf("doing stage 8\n");
+                //printf("doing stage 8\n");
                 glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -579,7 +581,7 @@ int main()
             //stage 4 draw triangles from the 3 points   
             if (stageUpTo > 8)
             {
-                printf("doing stage 9\n");
+                //printf("doing stage 9\n");
                 /*glBindFramebuffer(GL_FRAMEBUFFER, stage4Framebuffer);
                 glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 
@@ -652,11 +654,11 @@ int main()
         }
         if (shaderMode == 1) {
 
-            printf("begining of shader mode 1\n");
+            //printf("begining of shader mode 1\n");
 
             if (stageUpTo > 5) {
 
-                printf("doing stage 6\n");
+                //printf("doing stage 6\n");
                 glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
 
                 //printf("\n\nnew frame============\n");
@@ -664,7 +666,7 @@ int main()
                 unordered_set <dvec2> pointsSet;
 
                 for (size_t i = 0; i < numberOfPoints * 2; i+=2) {
-                    printf("inserting %f and %f into pointsSet\n", pointTexturePixels[i], pointTexturePixels[i + 1]);
+                    //printf("inserting %f and %f into pointsSet\n", pointTexturePixels[i], pointTexturePixels[i + 1]);
                     pointsSet.insert(dvec2(pointTexturePixels[i], pointTexturePixels[i+1]));
                 }
 
@@ -676,20 +678,20 @@ int main()
                 }
                 //points.insert(points.end(), pointsSet.begin(), pointsSet.end());
 
-                printf("delaunating points: \n");
-                for (size_t i = 0; i < points.size(); i+=2) {
-                    printf("%f, %f\n", points[i], points[i + 1]);
-                }
+                //printf("delaunating points: \n");
+                //for (size_t i = 0; i < points.size(); i+=2) {
+                //    printf("%f, %f\n", points[i], points[i + 1]);
+                //}
 
                 delaunator::Delaunator d = delaunator::Delaunator(points);
-
+                
 
 
 
                 vector<float> verts;
                 vector<unsigned int> indexes;
 
-                for (size_t i = 0; i < d.coords.size(); i += 6) {
+                /*for (size_t i = 0; i < d.coords.size(); i += 6) {
                     float centX = (d.coords[i + 0] + d.coords[i + 2] + d.coords[i + 4])/3.0;
                     float centY = (d.coords[i + 1] + d.coords[i + 3] + d.coords[i + 5])/3.0;
 
@@ -705,13 +707,50 @@ int main()
                     verts.push_back(d.coords[i + 5]);
                     verts.push_back(centX);
                     verts.push_back(centY);
+                }*/
+
+
+                for (size_t i = 0; i < d.triangles.size(); i += 3) {
+
+
+
+
+                    size_t v1 = d.triangles[i + 0];
+                    size_t v2 = d.triangles[i + 1];
+                    size_t v3 = d.triangles[i + 2];
+
+                    float centX = (d.coords[(v1 * 2) + 0] + d.coords[(v2 * 2) + 0] + d.coords[(v3 * 2) + 0]) / 3.0;
+                    float centY = (d.coords[(v1 * 2) + 1] + d.coords[(v2 * 2) + 1] + d.coords[(v3 * 2) + 1]) / 3.0;
+
+                    verts.push_back(d.coords[(v1 * 2) + 0]);
+                    verts.push_back(d.coords[(v1 * 2) + 1]);
+                    verts.push_back(centX);
+                    verts.push_back(centY);
+                    verts.push_back(d.coords[(v2 * 2) + 0]);
+                    verts.push_back(d.coords[(v2 * 2) + 1]);
+                    verts.push_back(centX);
+                    verts.push_back(centY);
+                    verts.push_back(d.coords[(v3 * 2) + 0]);
+                    verts.push_back(d.coords[(v3 * 2) + 1]);
+                    verts.push_back(centX);
+                    verts.push_back(centY);
+                
                 }
 
 
+                /*printf("vertices: \n");
+                for (size_t i = 0; i < verts.size(); i += 4) {
+                    printf("%f, %f, %f, %f\n", verts[i], verts[i + 1], verts[i + 2], verts[i + 3]);
+                }*/
+                /*printf("vertices: \n");
+                for (size_t i = 0; i < verts.size(); i += 2) {
+                    printf("%f, %f\n", verts[i], verts[i + 1]);
+                }
 
-                for (size_t i = 0; i < d.triangles.size(); i++) {
+                cin.get();*/
+                /*for (size_t i = 0; i < d.triangles.size(); i++) {
                     indexes.push_back(d.triangles[i]);
-                }
+                }*/
 
                 
 
@@ -727,8 +766,8 @@ int main()
                 glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
                 glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(verts[0]), verts.data(), GL_STATIC_DRAW);
 
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEBO);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(indexes[0]), indexes.data(), GL_STATIC_DRAW);
+                //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEBO);
+                //glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(indexes[0]), indexes.data(), GL_STATIC_DRAW);
 
 
                 glEnableVertexAttribArray(0);
@@ -749,15 +788,22 @@ int main()
 
                 shader->setMatFour("projection", ortho);
 
-                glDisable(GL_CULL_FACE);
-                glDisable(GL_DEPTH_TEST);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                uint32_t colorLocationTri = glGetUniformLocation(shader->program, "colorTexture");
+                glUniform1i(colorLocationTri, 0);
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+
+                //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
                 glBindVertexArray(triangleVAO);
-                glDrawElements(GL_TRIANGLES, indexes.size(), GL_UNSIGNED_INT, 0);
+                glDrawArrays(GL_TRIANGLES, 0, verts.size());
+                //glDrawElements(GL_TRIANGLES, indexes.size(), GL_UNSIGNED_INT, 0);
 
 
-                glEnable(GL_CULL_FACE);
-                glEnable(GL_DEPTH_TEST);
+                //glDisable(GL_CULL_FACE);
+               // glDisable(GL_DEPTH_TEST);
+                //glEnable(GL_CULL_FACE);
+                //glEnable(GL_DEPTH_TEST);
 
             }
 

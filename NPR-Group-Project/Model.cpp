@@ -272,6 +272,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, const mat4& nodeTx) 
         diffuse = loadMaterialTextures(material,
             aiTextureType_DIFFUSE, "texture_diffuse")[0];
         //textures.push_back(diffuseMaps);
+
         specular = loadMaterialTextures(material,
             aiTextureType_SPECULAR, "texture_specular")[0];
         //textures.push_back(specularMaps);
@@ -348,6 +349,15 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type,
             textures_loaded.push_back(texture); // add to loaded textures
         }
     }
+    if (textures.empty()) {
+        Texture texture;
+        texture.id = textureFromFile("BUG.png", "");
+        texture.type = typeName;
+        texture.path = "BUG.png";
+        textures.push_back(texture);
+    }
+
+
     return textures;
 }
 
