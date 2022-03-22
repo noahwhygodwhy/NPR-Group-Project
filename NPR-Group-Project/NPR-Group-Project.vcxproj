@@ -180,6 +180,8 @@
     <None Include="simple.vert" />
     <None Include="simpleFragShader.glsl" />
     <None Include="simpleVertShader.glsl" />
+    <None Include="sobelFragShader.glsl" />
+    <None Include="sobelVertShader.glsl" />
     <None Include="tempPointDisplayFragShader.glsl" />
     <None Include="tempPointDisplayVertShader.glsl" />
     <None Include="thirdFragShader.glsl" />

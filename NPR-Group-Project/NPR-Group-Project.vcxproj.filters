@@ -140,5 +140,11 @@
     <None Include="tempPointDisplayVertShader.glsl">
       <Filter>Shaders\Triangle Shaders</Filter>
     </None>
+    <None Include="sobelFragShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="sobelVertShader.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

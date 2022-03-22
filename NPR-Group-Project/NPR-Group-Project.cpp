@@ -24,6 +24,7 @@ enum Stages {
     DEPTH = 0,
     NORMALS,
     COLOR,
+    SOBEL,
     LINE,
     POINTS,
     STATIC,
@@ -47,7 +48,7 @@ double lastFrame = 0.0f; // Time of last frame
 int screenX = 1000;
 int screenY = 1000;
 
-int numberOfPoints = 500;
+int numberOfPoints = 5000;
 
 
 //drawn framebuffer texture
@@ -264,23 +265,20 @@ int main()
     //models.push_back(new Model("dedust"));
 
     shaders["object"] = new Shader("object.vert", "object.frag");
-    shaders["regular"] = new Shader("vertShader.glsl", "fragShader.glsl");
+    //shaders["regular"] = new Shader("vertShader.glsl", "fragShader.glsl");
     shaders["normal"] = new Shader("vertShader.glsl", "normalFragShader.glsl");
     shaders["depth"] = new Shader("vertShader.glsl", "depthFragShader.glsl");
-    shaders["simpleShader"] = new Shader("simpleVertShader.glsl", "simpleFragShader.glsl");
+    shaders["sobel"] = new Shader("sobelVertShader.glsl", "sobelFragShader.glsl");
+    //shaders["simpleShader"] = new Shader("simpleVertShader.glsl", "simpleFragShader.glsl");
     shaders["line"] = new Shader("lineVertShader.glsl", "lineFragShader.glsl");
     shaders["point"] = new Shader("pointVertShader.glsl", "pointFragShader.glsl");
     shaders["coord"] = new Shader("tempPointDisplayVertShader.glsl", "tempPointDisplayFragShader.glsl");
 
-    shaders["veronoi"] = new Shader("veronoiVertShader.glsl", "veronoiFragShader.glsl");
-    shaders["vPoints"] = new Shader("veronPointVertShader.glsl", "veronPointFragShader.glsl");
-    shaders["stage1"] = new Shader("Stage1VertShader.glsl", "Stage1FragShader.glsl");
-    shaders["stage2"] = new Shader("Stage2VertShader.glsl", "Stage2FragShader.glsl");
-    shaders["stage3"] = new Shader("Stage3VertShader.glsl", "Stage3FragShader.glsl");
-    shaders["stage4"] = new Shader("Stage4VertShader.glsl", "Stage4FragShader.glsl");
-    shaders["stage5"] = new Shader("Stage5VertShader.glsl", "Stage5FragShader.glsl");
+    //shaders["veronoi"] = new Shader("veronoiVertShader.glsl", "veronoiFragShader.glsl");
+    //shaders["vPoints"] = new Shader("veronPointVertShader.glsl", "veronPointFragShader.glsl");
 
     shaders["thirdPartyDelaunay"] = new Shader("thirdVertShader.glsl", "thirdFragShader.glsl");
+
 
     shaders["kuwahara"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
 
@@ -429,12 +427,36 @@ int main()
             }
         }
 
+//get edges using sobel operator
+
+
+        if (stageUpTo >= SOBEL) {
+            if (stageUpTo > SOBEL) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
+            if (stageUpTo == SOBEL) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            printf("doing stage SOBEL\n");
+            glClearColor(0.01f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader = shaders["sobel"];
+            shader->use();
+            shader->setMatFour("projection", ortho);
+            //shader->setVecTwo("screenResolution", vec2(screenX, screenY));
+            //shader.setMatFour("view", view);
+
+            uint32_t colorLocationSobel = glGetUniformLocation(shader->program, "colorTexture");
+            glUniform1i(colorLocationSobel, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+
+            flatscreen.draw(shader);
+        }
+
+
 //draws edges, white 
         if (stageUpTo >= LINE) {
             if (stageUpTo > LINE) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
             if (stageUpTo == LINE) glBindFramebuffer(GL_FRAMEBUFFER, 0);
             printf("doing stage LINE\n");
-            glClearColor(0.01f, 0.0f, 0.0f, 1.0f);
+            glClearColor(0.02f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["line"];
             shader->use();

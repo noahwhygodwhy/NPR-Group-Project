@@ -97,14 +97,12 @@ void main()
     
     //randomUV.x = rand(eyePos + vec3(fraguv, 0) + vec3(val));
     //randomUV.y = rand(-vec3(eyePos.z, eyePos.x, eyePos.y) + vec3(fraguv, 0) + vec3(val+1.0));
-    while(val < 0.9) {//2.0 was stable
+    while(val < 1.0) {//2.0 was stable
         randomUV.x = rand(eyePos + vec3(fraguv, 0) + vec3(val));
         randomUV.y = rand(-vec3(eyePos.z, eyePos.x, eyePos.y) + vec3(fraguv, 0) + vec3(val+1.0));
         i++;
-        vec3 color = texture(lineTexture, randomUV).xyz;
-        
-
-        val += color.x;
+        val+= texture(lineTexture, randomUV).x;
+        //val += color.x;
     }
     FragColor = vec4(randomUV, 0.0, 1.0);
 }
