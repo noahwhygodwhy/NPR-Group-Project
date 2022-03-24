@@ -48,26 +48,31 @@ void main()
 
 
 
+
+    vec3 centerColor = texelFetch(colorTexture, ivec2(gl_FragCoord.xy), 0).xyz;
+
     for(int x = -1; x <= 1; x++) {
         for(int y = -1; y <= 1; y++) {
-        
-            ivec2 coord = clamp(ivec2(gl_FragCoord.xy)+ivec2(x, y), ivec2(0, 0), maxSize-ivec2(1.0));//maxSize-ivec2(1.0)
-            float theColor = avgRGB(texelFetch(colorTexture, coord, 0).xyz);
-            float sA = theColor * ka[x+1][y+1];
-            float sB = theColor * kb[x+1][y+1];
-
-            sobelVal += sA+sB;
+            ivec2 coord = clamp(ivec2(gl_FragCoord.xy)+ivec2(x, y), ivec2(0, 0), maxSize-ivec2(1.0));
 
             depthVal += abs(texelFetch(depthTexture, ivec2(gl_FragCoord.xy), 0).x-texelFetch(depthTexture, coord, 0).x);
             normalVal += distance(texelFetch(normalTexture, ivec2(gl_FragCoord.xy), 0).xyz, texelFetch(normalTexture, coord, 0).xyz);
-
+            sobelVal += distance(texelFetch(colorTexture, coord, 0).xyz, centerColor);
         }
     }
 
     depthVal = depthVal / 8.0f;
     normalVal = normalVal / 8.0f;
+    sobelVal = sobelVal /8.0f;
 
-    if(normalVal > 0.4f || depthVal > 0.02f || sobelVal > 0.1) {
+    /*FragColor = vec4(vec3(sobelVal), 1.0);
+
+    if(sobelVal > 0.2){
+        FragColor = vec4(1.0);
+        return;
+    }
+    discard;*/
+    if(normalVal > 0.4f || depthVal > 0.02f || sobelVal > 0.2) {
         FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     } else {
     //FragColor = vec4(vec3(normalVal + (depthVal*75.0)), 1.0);
