@@ -65,17 +65,9 @@ void main()
     normalVal = normalVal / 8.0f;
     sobelVal = sobelVal /8.0f;
 
-    /*FragColor = vec4(vec3(sobelVal), 1.0);
-
-    if(sobelVal > 0.2){
-        FragColor = vec4(1.0);
-        return;
-    }
-    discard;*/
     if(normalVal > 0.4f || depthVal > 0.02f || sobelVal > 0.2) {
         FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     } else {
-    //FragColor = vec4(vec3(normalVal + (depthVal*75.0)), 1.0);
         discard;
     }
 
