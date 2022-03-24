@@ -34,7 +34,7 @@ void main()
         color = vec3(0.0f, 0.0f, fragNormal.z);
     }
 
-    FragColor = vec4(color, 1.0f);
+    //FragColor = vec4(color, 1.0f);
     vec3 mwn = squareAndNormalize(fragNormal);
     //FragColor = vec4(squareAndNormalize(fragNormal), 1.0f);
     

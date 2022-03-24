@@ -24,7 +24,7 @@ enum Stages {
     DEPTH = 0,
     NORMALS,
     COLOR,
-    SOBEL,
+    //SOBEL,
     LINE,
     POINTS,
     STATIC,
@@ -39,7 +39,7 @@ using namespace std;
 using namespace glm;
 
 int shaderMode = 1;
-Stages stageUpTo = DEPTH;
+Stages stageUpTo = LINE;
 //constexpr int maxStage = 9;
 
 double deltaTime = 0.0f;	// Time between current frame and last frame
@@ -63,6 +63,7 @@ struct DFT {
 DFT depthDFT;
 DFT normalDFT;
 DFT colorDFT;
+//DFT sobelDFT;
 DFT lineDFT;
 DFT pointDFT;
 DFT coordDFT;
@@ -120,6 +121,7 @@ void genFrameBuffers() {
     regenFrameBuffer(depthDFT);
     regenFrameBuffer(normalDFT);
     regenFrameBuffer(colorDFT);
+    //regenFrameBuffer(sobelDFT);
     regenFrameBuffer(lineDFT);
     regenFrameBuffer(pointDFT, numberOfPoints, 1);
     regenFrameBuffer(veronoiDFT);
@@ -362,7 +364,7 @@ int main()
 
 
  //Draw the depth of the object
-        if (stageUpTo >= DEPTH) {
+       /**/ if (stageUpTo >= DEPTH) {
             if (stageUpTo > DEPTH) glBindFramebuffer(GL_FRAMEBUFFER, depthDFT.framebuffer);
             if (stageUpTo == DEPTH) glBindFramebuffer(GL_FRAMEBUFFER, 0);
             printf("doing stage DEPTH\n");
@@ -375,14 +377,15 @@ int main()
             for (Model* m : models) {
                 float newNear = m->getNear(eye);
                 float newFar = m->getFar(eye);
-                shader->setMatFour("projection", glm::perspective(glm::radians(70.0f), ratio, glm::max(newNear, 0.01f), glm::min(newFar, 1.0f)));
+                shader->setMatFour("projection", glm::perspective(glm::radians(70.0f), ratio, glm::max(newNear, 0.01f), newFar));
                 shader->setFloat("near", newNear);
                 shader->setFloat("far", newFar);
                 m->draw(shader);
             }
 
         }
-        
+
+
 //draw the normal (really the direction) of the object
 
         if (stageUpTo >= NORMALS) {
@@ -430,25 +433,27 @@ int main()
 //get edges using sobel operator
 
 
-        if (stageUpTo >= SOBEL) {
-            if (stageUpTo > SOBEL) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
-            if (stageUpTo == SOBEL) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        /*if (stageUpTo >= SOBEL) {
+            if (stageUpTo > SOBEL) { glBindFramebuffer(GL_FRAMEBUFFER, sobelDFT.framebuffer); }
+            if (stageUpTo == SOBEL) { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+
             printf("doing stage SOBEL\n");
-            glClearColor(0.01f, 0.0f, 0.0f, 1.0f);
+            glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["sobel"];
             shader->use();
             shader->setMatFour("projection", ortho);
             //shader->setVecTwo("screenResolution", vec2(screenX, screenY));
-            //shader.setMatFour("view", view);
 
-            uint32_t colorLocationSobel = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocationSobel, 0);
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+
+            glUniform1i(colorLocation, 0);
+
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
 
             flatscreen.draw(shader);
-        }
+        }*/
 
 
 //draws edges, white 
@@ -466,20 +471,28 @@ int main()
 
             uint32_t normalLocation = glGetUniformLocation(shader->program, "normalTexture");
             uint32_t depthLocation = glGetUniformLocation(shader->program, "depthTexture");
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
 
             glUniform1i(normalLocation, 0);
             glUniform1i(depthLocation, 1);
+            glUniform1i(colorLocation, 2);
 
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, normalDFT.texture);
 
             glActiveTexture(GL_TEXTURE0 + 1);
             glBindTexture(GL_TEXTURE_2D, depthDFT.texture);
+
+            glActiveTexture(GL_TEXTURE0 + 2);
+            glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
+
+
             flatscreen.draw(shader);
         }
         
  //use line data to create a texture of coordinates distributed weighted twoards the edges of objects
         if (stageUpTo >= POINTS) {
+            printf("doing points\n");
             if (stageUpTo > POINTS) glBindFramebuffer(GL_FRAMEBUFFER, pointDFT.framebuffer);
             if (stageUpTo == POINTS) glBindFramebuffer(GL_FRAMEBUFFER, 0);
             //printf("doing stage 4\n");
@@ -502,7 +515,7 @@ int main()
 
         if (stageUpTo == STATIC) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+            printf("doing static\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["coord"];
@@ -521,6 +534,7 @@ int main()
             glBindVertexArray(0);
         }
         if (stageUpTo >= TRIANGLES) {
+            printf("doing triangles\n");
 
             glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
             unordered_set <dvec2> pointsSet;

@@ -16,28 +16,34 @@ mat3 kb = mat3(1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0);
 void main() 
 {
 
-    ivec2 maxSize = textureSize(colorTexture, 0) - ivec2(1.0);
+    ivec2 maxSize = textureSize(colorTexture, 0);
 
 
     float sA = 0;
     float sB = 0;
 
-    for(int channel = 0; channel < 3; channel++) {
+    int x = 0;
+    int y = 0;
     
-    }
+
+    ivec2 coord = ivec2(gl_FragCoord.xy);
+
+
+    mat3 gradiants;
+
+
+
     for(int x = -1; x <= 1; x++){
         for(int y = -1; y <= 1; y++)
         {
-            ivec2 coord = clamp(ivec2(gl_FragCoord.xy)+ivec2(x, y), ivec2(0), maxSize-ivec2(1.0));
+            ivec2 coord = clamp(ivec2(gl_FragCoord.xy)+ivec2(x, y), ivec2(0, 0), maxSize-ivec2(1.0));//maxSize-ivec2(1.0)
 
             float theColor = avgRGB(texelFetch(colorTexture, coord, 0).xyz);
-            
-            //FragColor = vec4(theColor, 1.0);
-
-            sA = theColor * ka[x][y];
-            sB = theColor * kb[x][y];
-
+            sA += theColor * ka[x+1][y+1];
+            sB += theColor * kb[x+1][y+1];
         }
     }
-    FragColor = vec4(vec3(sA+sB)/2.0, 1.0);
+
+
+    FragColor = vec4(vec3(clamp(sA+sB, 0.0, 1.0)), 1.0);
 }
