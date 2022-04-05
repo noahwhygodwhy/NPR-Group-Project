@@ -39,7 +39,7 @@ using namespace std;
 using namespace glm;
 
 int shaderMode = 1;
-Stages stageUpTo = LINE;
+Stages stageUpTo = DEPTH;
 //constexpr int maxStage = 9;
 
 double deltaTime = 0.0f;	// Time between current frame and last frame
@@ -367,7 +367,7 @@ int main()
        /**/ if (stageUpTo >= DEPTH) {
             if (stageUpTo > DEPTH) glBindFramebuffer(GL_FRAMEBUFFER, depthDFT.framebuffer);
             if (stageUpTo == DEPTH) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage DEPTH\n");
+            if(false)printf("doing stage DEPTH\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["depth"];
@@ -391,7 +391,7 @@ int main()
         if (stageUpTo >= NORMALS) {
             if (stageUpTo > NORMALS) glBindFramebuffer(GL_FRAMEBUFFER, normalDFT.framebuffer);
             if (stageUpTo == NORMALS) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage NORMALS\n");
+            if(false)printf("doing stage NORMALS\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["normal"];
@@ -413,7 +413,7 @@ int main()
         if (stageUpTo >=COLOR) {
             if (stageUpTo > COLOR) glBindFramebuffer(GL_FRAMEBUFFER, colorDFT.framebuffer);
             if (stageUpTo == COLOR) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage COLOR\n");
+            if(false)printf("doing stage COLOR\n");
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["object"];
@@ -437,7 +437,7 @@ int main()
             if (stageUpTo > SOBEL) { glBindFramebuffer(GL_FRAMEBUFFER, sobelDFT.framebuffer); }
             if (stageUpTo == SOBEL) { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-            printf("doing stage SOBEL\n");
+            if(false)printf("doing stage SOBEL\n");
             glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["sobel"];
@@ -460,7 +460,7 @@ int main()
         if (stageUpTo >= LINE) {
             if (stageUpTo > LINE) glBindFramebuffer(GL_FRAMEBUFFER, lineDFT.framebuffer);
             if (stageUpTo == LINE) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            printf("doing stage LINE\n");
+            if(false)printf("doing stage LINE\n");
             glClearColor(0.02f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["line"];
@@ -492,10 +492,10 @@ int main()
         
  //use line data to create a texture of coordinates distributed weighted twoards the edges of objects
         if (stageUpTo >= POINTS) {
-            printf("doing points\n");
+            //printf("doing points\n");
             if (stageUpTo > POINTS) glBindFramebuffer(GL_FRAMEBUFFER, pointDFT.framebuffer);
             if (stageUpTo == POINTS) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            //printf("doing stage 4\n");
+            //if(false)printf("doing stage 4\n");
             glClearColor(0.00f, 0.50f, 0.00f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["point"];
@@ -534,7 +534,7 @@ int main()
             glBindVertexArray(0);
         }
         if (stageUpTo >= TRIANGLES) {
-            printf("doing triangles\n");
+            //printf("doing triangles\n");
 
             glReadPixels(0, 0, numberOfPoints, 1, GL_RG, GL_FLOAT, pointTexturePixels);
             unordered_set <dvec2> pointsSet;
