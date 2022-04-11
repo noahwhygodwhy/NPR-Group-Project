@@ -363,6 +363,7 @@ int main()
 
 
 
+        //a
  //Draw the depth of the object
        /**/ if (stageUpTo >= DEPTH) {
             if (stageUpTo > DEPTH) glBindFramebuffer(GL_FRAMEBUFFER, depthDFT.framebuffer);
