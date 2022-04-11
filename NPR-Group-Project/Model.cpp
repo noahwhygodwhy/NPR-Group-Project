@@ -282,6 +282,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, const mat4& nodeTx) 
 
 unsigned int textureFromFile(const char* path, const string& directory)
 {
+    stbi_set_flip_vertically_on_load(true);
     string filename = string(path);
     filename = directory + '/' + filename;
 

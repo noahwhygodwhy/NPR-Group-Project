@@ -2,11 +2,15 @@
 
 out vec4 FragColor;
 
+in vec2 fraguv;
+
 uniform int kernalWidth;
 uniform int kernalHeight;
 
 uniform int width;
 uniform int height;
+
+
 
 uniform sampler2D colorTexture;
 
@@ -14,9 +18,9 @@ uniform sampler2D colorTexture;
 
 
 
-vec2 pixelToUV(vec2 fragCoord){
-    return fragCoord/vec2(width, height);
-}
+//vec2 pixelToUV(vec2 fragCoord){
+//    return fragCoord/vec2(width, height);
+//}
 
 void getMeanAndVariance(in ivec2 xRange, in ivec2 yRange, out vec3 mean, out float variance) {
 
@@ -26,10 +30,13 @@ void getMeanAndVariance(in ivec2 xRange, in ivec2 yRange, out vec3 mean, out flo
     int samples = 0;
     for(int x = xRange.x; x < xRange.y; x++) {
         for(int y = yRange.x; y < yRange.y; y++) {
-            vec2 pixelCoord = gl_FragCoord.xy+vec2(x, y);
-            pixelCoord = min(pixelCoord, vec2(width-1, height-1));
-            pixelCoord = max(pixelCoord, vec2(0,0));
-            vec3 pixelColor = texture(colorTexture, pixelToUV(pixelCoord)).xyz;
+            ivec2 pixelCoord = ivec2(gl_FragCoord.xy+vec2(x, y));
+            pixelCoord = min(pixelCoord, ivec2(width-1, height-1));
+            pixelCoord = max(pixelCoord, ivec2(0,0));
+            //vec3 pixelColor = texture(colorTexture, fraguv).xyz;
+
+            //TODO: need to account for image being different size than screen
+            vec3 pixelColor = texelFetch(colorTexture, pixelCoord, 0).xyz;
 
             mean += pixelColor;
             channelvariance += (pixelColor*pixelColor);
@@ -44,6 +51,9 @@ void getMeanAndVariance(in ivec2 xRange, in ivec2 yRange, out vec3 mean, out flo
 
 void main() 
 {
+
+    /*FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    return;*/
 
 
     float minVariance = 1000000000000000000.0;

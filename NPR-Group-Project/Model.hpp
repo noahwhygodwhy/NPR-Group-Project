@@ -52,5 +52,6 @@ private:
     void genBoundingBuffers();
 
 };
+unsigned int textureFromFile(const char* path, const string& directory = "./");
 
 #endif

@@ -17,7 +17,7 @@
 #include "vec2Hash.hpp"
 #include "delaunator.hpp"
 
-
+#include "Video.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -216,7 +216,12 @@ unordered_map<string, Shader*> shaders;
 Shader* shader;
 int main()
 {
-    
+    //Video x("C:/Users/noahm/OneDrive/Desktop/sample.mp4");
+    //printf("opened\n");
+    //x.getFrame();
+    //printf("got frame\n");
+    //exit(0);
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -323,6 +328,8 @@ int main()
 
     printf("begining of draw loop\n");
 
+    int sampleTexture = textureFromFile("sample.png");
+
     while (!glfwWindowShouldClose(window)) {
         double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -357,18 +364,22 @@ int main()
         //vec3 eye = vec3(5.0, 5.0, 5.0);
         mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
 
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader = shaders["kuwahara"];
         shader->use();
-        shader->setVecThree("eyePos", eye);
-        shader->setMatFour("view", view);
-        for (Model* m : models) {
-            shader->setMatFour("projection", glm::perspective(glm::radians(70.0f), ratio, 0.01f, 100.0f));
-            m->draw(shader);
-        }
+        shader->setMatFour("projection", ortho);
+        shader->setInt("width", screenX);
+        shader->setInt("height", screenY);
+        shader->setInt("kernalWidth", 10);
+        shader->setInt("kernalHeight", 10);
+        glActiveTexture(GL_TEXTURE0 + 0);
+        glBindTexture(GL_TEXTURE_2D, sampleTexture);
+
+        //shader->setVecThree("eyePos", eye);
+        //shader->setMatFour("view", view);
+        flatscreen.draw(shader);
         
 
 
