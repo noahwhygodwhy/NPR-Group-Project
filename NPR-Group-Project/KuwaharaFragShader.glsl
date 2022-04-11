@@ -24,19 +24,17 @@ uniform sampler2D colorTexture;
 
 void getMeanAndVariance(in ivec2 xRange, in ivec2 yRange, out vec3 mean, out float variance) {
 
+    vec2 pixelSize = vec2(1.0)/vec2(width, height);
+
     vec2 base = gl_FragCoord.xy;
     mean = vec3(0);
     vec3 channelvariance = vec3(0);
     int samples = 0;
     for(int x = xRange.x; x < xRange.y; x++) {
         for(int y = yRange.x; y < yRange.y; y++) {
-            ivec2 pixelCoord = ivec2(gl_FragCoord.xy+vec2(x, y));
-            pixelCoord = min(pixelCoord, ivec2(width-1, height-1));
-            pixelCoord = max(pixelCoord, ivec2(0,0));
-            //vec3 pixelColor = texture(colorTexture, fraguv).xyz;
+            vec2 pixelCoord = vec2(fraguv+(pixelSize*vec2(x, y)));
 
-            //TODO: need to account for image being different size than screen
-            vec3 pixelColor = texelFetch(colorTexture, pixelCoord, 0).xyz;
+            vec3 pixelColor = texture(colorTexture, pixelCoord).xyz;
 
             mean += pixelColor;
             channelvariance += (pixelColor*pixelColor);

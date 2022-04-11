@@ -372,8 +372,8 @@ int main()
         shader->setMatFour("projection", ortho);
         shader->setInt("width", screenX);
         shader->setInt("height", screenY);
-        shader->setInt("kernalWidth", 10);
-        shader->setInt("kernalHeight", 10);
+        shader->setInt("kernalWidth",10);
+        shader->setInt("kernalHeight", 20);
         glActiveTexture(GL_TEXTURE0 + 0);
         glBindTexture(GL_TEXTURE_2D, sampleTexture);
 
