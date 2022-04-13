@@ -167,9 +167,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="depthFragShader.glsl" />
+    <None Include="etfFragShader.glsl" />
     <None Include="fragShader.glsl" />
+    <None Include="GaussianBlurFragShader.glsl" />
     <None Include="KuwaharaFragShader.glsl" />
     <None Include="KuwaharaVertShader.glsl" />
+    <None Include="LaplacianFragShader.glsl" />
     <None Include="lineFragShader.glsl" />
     <None Include="lineVertShader.glsl" />
     <None Include="normalFragShader.glsl" />
@@ -189,6 +192,7 @@
     <None Include="thirdFragShader.glsl" />
     <None Include="thirdVertShader.glsl" />
     <None Include="vertShader.glsl" />
+    <None Include="DerivativeFragShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

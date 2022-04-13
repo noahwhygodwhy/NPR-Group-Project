@@ -76,24 +76,52 @@ void Mesh::draw(Shader* shader, const mat4& parentTx) const {
 
 
 
-    if (diffuse.id == 0) {
+    /*if (diffuse.id == 0) {
 
         return;
-    }
+    }*/
+
+
+    //printf("step1a\n");
+    uint32_t colorLocation = glGetUniformLocation(shader->program, "diffuseSampler");
+    //printf("step1b\n");
+    glUniform1i(colorLocation, 0);
+    //printf("step1c\n");
+    glActiveTexture(GL_TEXTURE0 + 0);
+    //printf("step1d\n");
+    glBindTexture(GL_TEXTURE_2D, diffuse.id);
+    //printf("step1e\n");
 
     //printf("step 1:\n");
-    glActiveTexture(GL_TEXTURE0 + 0);
+    //glActiveTexture(GL_TEXTURE0 + 0);
     //printf("step 2:%p\n", diffuse.id);
-    glBindTexture(GL_TEXTURE_2D, diffuse.id);
+    //glBindTexture(GL_TEXTURE_2D, diffuse.id);
     //printf("step 3:\n");
-    shader->setInt("diffuseSampler", 0);
+    ////shader->setInt("diffuseSampler", 0);
 
-    //printf("step 4:\n");
+    /*if (specular.id == 0) {
+
+        return;
+    }*/
+
+
+
+    //printf("step2a\n");
+    colorLocation = glGetUniformLocation(shader->program, "specularSampler");
+    //printf("step2b\n");
+    glUniform1i(colorLocation, 1);
+    //printf("step2c\n");
     glActiveTexture(GL_TEXTURE0 + 1);
-    //printf("step 5:\n");
+    //printf("step2d\n");
     glBindTexture(GL_TEXTURE_2D, specular.id);
-    //printf("step 6:\n");
-    shader->setInt("specularSampler", 1);
+    //printf("step2e\n");
+
+
+   /* glActiveTexture(GL_TEXTURE0 + 1);
+    printf("step 5:\n");
+    glBindTexture(GL_TEXTURE_2D, specular.id);
+    printf("step 6:\n");*/
+    //shader->setInt("specularSampler", 1);
 
     glActiveTexture(GL_TEXTURE0);
 
@@ -120,6 +148,7 @@ void Mesh::draw(Shader* shader, const mat4& parentTx) const {
     // 
     //printf("step a:\n");
     glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     //printf("step b:\n");
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     //printf("step c:\n");

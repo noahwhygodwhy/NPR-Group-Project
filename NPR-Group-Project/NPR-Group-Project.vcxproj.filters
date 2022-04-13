@@ -152,5 +152,17 @@
     <None Include="sobelVertShader.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="DerivativeFragShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
+    </None>
+    <None Include="GaussianBlurFragShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
+    </None>
+    <None Include="LaplacianFragShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
+    </None>
+    <None Include="etfFragShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
