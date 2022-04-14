@@ -1,126 +1,171 @@
-//#include "Video.hpp"
-//Video::Video(string videoFileName)
-//{
-//
-//	//av_register_all();
-//
-//
-//
-//	this->formatContext = avformat_alloc_context();
-//
-//	if (!this->formatContext) {
-//		printf("can't create context for ffmpeg\n");
-//		exit(-1);
-//	}
-//	int status = avformat_open_input(&this->formatContext, videoFileName.c_str(), NULL, NULL);
-//	if (status != 0) {
-//		printf("can't open video file for ffmpeg\n");
-//		exit(-1);
-//	}
-//	this->streamIndex = -1;
-//	for (int i = 0; i < this->formatContext->nb_streams; i++) {
-//		this->codecParams = this->formatContext->streams[i]->codecpar;
-//		this->codec = avcodec_find_decoder(this->codecParams->codec_id);
-//		if (!codec) { continue; }
-//		if (this->codecParams->codec_type == AVMEDIA_TYPE_VIDEO) {
-//			this->streamIndex = i;
-//			break;
-//		}
-//	}
-//
-//	if (streamIndex < 0) {
-//		printf("bad video file, no stream\n");
-//		exit(-1);
-//	}
-//
-//	AVCodecContext* codecContextOrig = avcodec_alloc_context3(this->codec);
-//
-//
-//	
-//	//avcodec_copy_context(codecContext, codecContextOrig);
-//
-//	avcodec_open2(this->codecContext, this->codec, NULL);
-//
-//
-//	this->channels = this->codecContext->channels;
-//	this->width = this->codecContext->width;
-//	this->height = this->codecContext->height;
-//
-//
-//	size_t numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, this->width, this->height, 1);
-//	this->frameBuffer = (unsigned char*)av_malloc(numBytes);
-//
-//}
-//
-//Video::~Video()
-//{
-//}
-//
-//
-////some of this is copy/pasted from 
-////http://dranger.com/ffmpeg/tutorial01.html
-////just to get a sample to actually do the shader on
-////https://www.youtube.com/watch?v=W6Yx3injNZs
-//void Video::getFrame() {
-//
-//	AVFrame* frame = av_frame_alloc();
-//
-//
-//	AVFrame* RGBframe = av_frame_alloc();
-//
-//	av_image_fill_arrays(RGBframe->data, RGBframe->linesize, this->frameBuffer, AV_PIX_FMT_RGB24, this->width, this->height, 1);
-//
-//	int frameFinished;
-//	AVPacket* packet;
-//	// initialize SWS context for software scaling
-//
-//	SwsContext* swsContext = sws_getContext(
-//		this->width,
-//		this->height,
-//		this->codecContext->pix_fmt,
-//		this->codecContext->width,
-//		this->codecContext->height,
-//		AV_PIX_FMT_RGB24,
-//		SWS_BILINEAR,
-//		NULL,
-//		NULL,
-//		NULL
-//	);
-//
-//	int i = 0;
-//	while (av_read_frame(this->formatContext, packet) >= 0) {
-//		// Is this a packet from the video stream?
-//		if (packet->stream_index == this->streamIndex) {
-//
-//			int res = avcodec_send_packet(this->codecContext, packet);
-//			if (res != 0) { printf("bad send packet\n"); exit(-1); }
-//			res = avcodec_receive_frame(this->codecContext, frame);
-//			if (res != 0) { printf("bad send packet\n"); exit(-1); }
-//
-//
-//
-//			// Decode video frame
-//			//avcodec_decode_video2(this->codecContext, frame, &frameFinished, packet);
-//			// Did we get a video frame?
-//			if (frameFinished) {
-//				// Convert the image from its native format to RGB
-//				sws_scale(swsContext, (uint8_t const* const*)frame->data,
-//					frame->linesize, 0, this->height,
-//					RGBframe->data, RGBframe->linesize);
-//
-//				// Save the frame to disk
-//				if (++i <= 5)
-//				{
-//					printf("outputing frame\n");
-//					for (int j = 0; j < this->width * this->height * this->channels; j++) {
-//						printf("%c, %c, %c\n", frameBuffer[j+0], frameBuffer[j + 1], frameBuffer[j + 2]);
-//					}
-//				}
-//			}
-//		}
-//
-//		// Free the packet that was allocated by av_read_frame
-//		av_packet_unref(packet);
-//		//av_free_packet(packet);
-//	}
-//}
+#include "Video.hpp"
+Video::Video(string videoFileName)
+{
+
+	//av_register_all();
+
+
+
+	this->formatContext = avformat_alloc_context();
+
+	if (!this->formatContext) {
+		printf("can't create context for ffmpeg\n");
+		exit(-1);
+	}
+
+	int status = avformat_open_input(&this->formatContext, videoFileName.c_str(), NULL, NULL);
+
+
+	av_dump_format(this->formatContext, 0, 0, 0);
+
+
+	if (status != 0) {
+		printf("can't open video file for ffmpeg\n");
+		exit(-1);
+	}
+	this->streamIndex = -1;
+	for (int i = 0; i < this->formatContext->nb_streams; i++) {
+		this->codecParams = this->formatContext->streams[i]->codecpar;
+		this->codec = avcodec_find_decoder(this->codecParams->codec_id);
+		printf("codecid: %i\n", this->codecParams->codec_id);
+		if (!codec) { continue; }
+		if (this->codecParams->codec_type == AVMEDIA_TYPE_VIDEO) {
+			this->streamIndex = i;
+			printf("went with stream %i\n", this->streamIndex);
+			break;
+		}
+	}
+
+	if (streamIndex < 0) {
+		printf("bad video file, no stream\n");
+		exit(-1);
+	}
+	AVCodec x;
+
+	printf("this->codec: %p\n", this->codec);
+	//AVCodecContext* codecContextOrig = avcodec_alloc_context3(this->codec);
+	this->codecContext = avcodec_alloc_context3(this->codec);
+	avcodec_parameters_to_context(this->codecContext, this->codecParams);
+	this->codecContext->channels = 4;
+	//avcodec_copy_context(this->codecContext, codecContextOrig);
+
+	printf("this->codecContext is: %p\n", this->codecContext);
+	
+	//avcodec_copy_context(codecContext, codecContextOrig);
+
+	avcodec_open2(this->codecContext, this->codec, NULL);
+
+
+	this->channels = this->codecContext->channels;
+	printf("channels: %i\n", this->channels);
+	this->width = this->codecContext->width;
+	this->height = this->codecContext->height;
+	printf("width: %i, height: %i\n", this->codecContext->width, this->codecContext->height);
+
+
+	size_t numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, this->width, this->height, 1);
+
+	printf("number of bites to allocate: %zu\n", numBytes);
+
+	frame = av_frame_alloc();
+
+
+}
+
+Video::~Video()
+{
+}
+
+
+//some of this is copy/pasted from 
+//http://dranger.com/ffmpeg/tutorial01.html
+//just to get a sample to actually do the shader on
+//https://www.youtube.com/watch?v=W6Yx3injNZs
+uint8_t* Video::getFrame() {
+
+
+
+	//av_image_fill_arrays(RGBframe->data, RGBframe->linesize, frame->data[0], AV_PIX_FMT_RGB24, this->width, this->height, 1);
+	//avpicture_fill((AVPicture*)RGBframe->data, buffer, AV_PIX_FMT_RGB24,codecContext->width, codecContext->height);
+	int frameFinished;
+	AVPacket* packet = av_packet_alloc();
+	// initialize SWS context for software scaling
+	
+
+
+
+
+	while (av_read_frame(this->formatContext, packet) >= 0) {
+
+		if (packet->stream_index != this->streamIndex) {
+			continue;
+		}
+
+
+		int res = avcodec_send_packet(this->codecContext, packet);
+
+		if (res < 0) { printf("bad send packet\n"); exit(-1); }
+
+		//while (true) {
+
+		res = avcodec_receive_frame(this->codecContext, frame);
+			
+		if(res == AVERROR(EAGAIN) || res== AVERROR_EOF){
+			continue;
+		}
+		//if (res != 0) { return frame->data[0]; };
+		else if (res < 0) { 
+			printf("bad receive frame\n"); exit(-1);
+		}
+
+		//}
+				
+
+		av_packet_unref(packet);
+		break;
+	}
+
+
+	SwsContext* swsContext = sws_getContext(
+		frame->width,
+		frame->height,
+		codecContext->pix_fmt,
+		frame->width,
+		frame->height,
+		AV_PIX_FMT_RGB24,
+		SWS_FAST_BILINEAR,
+		NULL,
+		NULL,
+		NULL);
+
+
+
+
+	uint8_t* data = new uint8_t[width * height * 4]();
+
+	uint8_t* dest[4] = {data, 0, 0, 0};
+	int destLinesize[4] = { frame->width * 3, 0, 0, 0 };
+	sws_scale(swsContext, frame->data, frame->linesize, 0, frame->height, dest, destLinesize );
+
+	/*for (int x = 0; x < width; x++) {
+		for (int y = height - 1; y >=0; y--) {
+			data[(y*width*3) + (x*3) + 0] = frame->data[0][(y*frame->linesize[0])+x];
+			data[(y*width*3) + (x*3) + 1] = frame->data[0][(y*frame->linesize[0])+x];
+			data[(y*width*3) + (x*3) + 2] = frame->data[0][(y*frame->linesize[0])+x];
+		}
+	}*/
+
+
+
+
+
+	return data;
+
+	//return frame->data[0];
+	//https://youtu.be/W6Yx3injNZs?t=3262
+}
+
+void Video::freeFrame() {
+	return;
+	//av_frame_free(&this->frame);
+}

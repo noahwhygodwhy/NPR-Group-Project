@@ -164,5 +164,8 @@
     <None Include="etfFragShader.glsl">
       <Filter>Shaders\Paint Shaders</Filter>
     </None>
+    <None Include="BasicColorFragShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

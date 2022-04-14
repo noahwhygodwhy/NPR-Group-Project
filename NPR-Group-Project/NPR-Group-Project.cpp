@@ -25,10 +25,11 @@
 enum Stages {
     COLOR,
     GAUSSIAN,
-    LAPLACIAN,
-    SOBEL,
-    DERIVATIVE,
-    ETF,
+    KUWAHARA,
+    //LAPLACIAN,
+    //SOBEL,
+    //DERIVATIVE,
+    //ETF,
     MAX_STAGE
 
 
@@ -46,6 +47,11 @@ double lastFrame = 0.0f; // Time of last frame
 
 int screenX = 1000;
 int screenY = 1000;
+
+int kuwaharaX = 5;
+int kuwaharaY = 5;
+
+float viewAngle = 0;
 
 int numberOfPoints = 5000;
 
@@ -66,6 +72,7 @@ DFT sobelDFT;
 DFT derivativeDFT;
 DFT ETF1DTF;
 DFT ETF2DTF;
+DFT kuwaharaDFT;
 
 
 void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
@@ -111,6 +118,7 @@ void genFrameBuffers() {
     regenFrameBuffer(derivativeDFT);
     regenFrameBuffer(ETF1DTF);
     regenFrameBuffer(ETF2DTF);
+    regenFrameBuffer(kuwaharaDFT);
 }
 
 
@@ -181,7 +189,30 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         }
         printf("stageupto: %i\n", stageUpTo);
     }
+    if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+        kuwaharaX = glm::max(kuwaharaX - 1, 0);
+        printf("kuwaharaX: %i\n", kuwaharaX);
+    }
 
+    if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+        kuwaharaX = glm::min(kuwaharaX + 1, 50);
+        printf("kuwaharaX: %i\n", kuwaharaX);
+    }
+    if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+        kuwaharaY = glm::min(kuwaharaY + 1, 50);
+        printf("kuwaharaX: %i\n", kuwaharaY);
+    }
+
+    if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+        kuwaharaY = glm::max(kuwaharaY - 1, 0);
+        printf("kuwaharaX: %i\n", kuwaharaY);
+    }
+    if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
+        viewAngle -= 5.0 / 360.0;
+    }
+    if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
+        viewAngle += 5.0 / 360.0;
+    }
 }
 
 vec4 calculatePolarPoints(const vec3& point, const vec2& polarCenter) {
@@ -218,11 +249,7 @@ int main()
     exit(-1);*/
 
 
-    //Video x("C:/Users/noahm/OneDrive/Desktop/sample.mp4");
-    //printf("opened\n");
-    //x.getFrame();
-    //printf("got frame\n");
-    //exit(0);
+    Video theVideo("C:/Users/noahm/OneDrive/Desktop/sample.mp4");
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -260,8 +287,8 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
 
-    //glEnable(GL_DEBUG_OUTPUT);
-    //glDebugMessageCallback(MessageCallback, 0);
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(MessageCallback, 0);
 
     Screen flatscreen;
 
@@ -270,7 +297,8 @@ int main()
     //models.push_back(new Model("dedust"));
 
     shaders["object"] = new Shader("object.vert", "object.frag");
-
+    shaders["color"] = new Shader("KuwaharaVertShader.glsl", "BasicColorFragShader.glsl");
+    shaders["kuwahara"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
     shaders["gaussian"] = new Shader("KuwaharaVertShader.glsl", "GaussianBlurFragShader.glsl");
     shaders["derivative"] = new Shader("KuwaharaVertShader.glsl", "DerivativeFragShader.glsl");
     shaders["laplacian"] = new Shader("KuwaharaVertShader.glsl", "LaplacianFragShader.glsl");
@@ -304,8 +332,9 @@ int main()
     glBindVertexArray(0);
 
 
-    unsigned int triangleVAO, triangleVBO, triangleEBO;
+    GLuint frameTextureID;
 
+    glGenTextures(1, &frameTextureID);
 
 
     int gaussianSize = 7;
@@ -350,23 +379,64 @@ int main()
 
 
 
+        /*for (uint64_t i = 0; i < theVideo.width * theVideo.height; i += 3) {
+            if(i%100==0)
+            printf("%i, %i, %i\n", theFrame[i + 0], theFrame[i + 1], theFrame[i + 2]);
+        }*/
+        //glDeleteTextures(1, &frameTextureID);
+        glGenTextures(1, &frameTextureID);
+        glBindTexture(GL_TEXTURE_2D, frameTextureID);
+
+        uint8_t* dataHere = theVideo.getFrame();
+
+       /*for (uint64_t i = 0; i < theVideo.width * theVideo.height; i += 3) {
+            if(i%100==0)
+            printf("%i, %i, %i\n", data[i + 0], data[i + 1], data[i + 2]);
+        }*/
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        //uint64_t i = theVideo.width*theVideo.height*2;
+        /*try{
+            for (; i < theVideo.width * theVideo.height*4; i++) {
+                printf("%lu: %i\n",i, dataHere[i]%2);
+            }
+        }
+        catch(exception e) {
+            printf("exeption at i: %lu\n", i);
+        }*/
+
+        //uint8_t* otherData = new uint8_t[theVideo.width * theVideo.height * 3]();
+        printf("about to copy\n");
+        //memcpy(otherData, dataHere, theVideo.width * theVideo.height * 3);
+        printf("copied\n");
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, dataHere);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+
+
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        float sinit = (sin(currentFrame / 5.0f));
-        float cosit = (cos(currentFrame / 5.0f));
+        float sinit = (sin(viewAngle / 5.0f));
+        float cosit = (cos(viewAngle / 5.0f));
         float ratio = (float)screenX / (float)screenY;
 
-        //vec3 eye = vec3(sinit * 5.0f, 5.0f, cosit * 5.0f);
+        vec3 eye = vec3(sinit * 5.0f, 5.0f, cosit * 5.0f);
         //vec3 eye = vec3(5.0f, 200.0f, 5.0f);//for dedust
-        vec3 eye = vec3(5.0, 5.0, 5.0);
+        //vec3 eye = vec3(5.0, 5.0, 5.0);
         mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
 
 
 
         if (stageUpTo >= COLOR) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo>COLOR?colorDFT.framebuffer:0);
+            /*glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo>COLOR?colorDFT.framebuffer:0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["object"];
@@ -374,10 +444,22 @@ int main()
             shader->setVecThree("eyePos", eye);
             shader->setMatFour("view", view);
             for (Model* m : models) {
-                shader->setMatFour("projection", glm::perspective(glm::radians(20.0f), ratio, 0.01f, 100.0f));
+                shader->setMatFour("projection", glm::perspective(glm::radians(40.0f), ratio, 0.01f, 100.0f));
                 m->draw(shader);
             }
-        
+        */
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > COLOR ? 0 : 0);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader = shaders["color"];
+            shader->use();
+            shader->setMatFour("projection", ortho);
+
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+            glUniform1i(colorLocation, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, frameTextureID);
+            flatscreen.draw(shader);
         }
 
         if (stageUpTo >= GAUSSIAN) {
@@ -395,91 +477,89 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
             flatscreen.draw(shader);
         }
-        if (stageUpTo >= LAPLACIAN) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > LAPLACIAN ? labplacianDFT.framebuffer : 0);
+        if (stageUpTo >= KUWAHARA) {
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > KUWAHARA ? kuwaharaDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["laplacian"];
+            shader = shaders["kuwahara"];
             shader->use();
             shader->setMatFour("projection", ortho);
 
-            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocation, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-            flatscreen.draw(shader);
-        }
-        if (stageUpTo >= SOBEL) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > SOBEL ? sobelDFT.framebuffer : 0);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["sobel"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
-
-            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocation, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-            flatscreen.draw(shader);
-        }
-        if (stageUpTo >= DERIVATIVE) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > DERIVATIVE ? derivativeDFT.framebuffer : 0);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["derivative"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
-
-            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocation, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-            flatscreen.draw(shader);
-        }
-        if (stageUpTo >= ETF) {
-
-             
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > ETF ? ETF1DTF.framebuffer : 0);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["etf"];
-            shader->use();
-            shader->setMatFour("projection", ortho);
+            shader->setInt("kernalWidth", kuwaharaX);
+            shader->setInt("kernalHeight", kuwaharaY);
 
             uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
             glUniform1i(colorLocation, 0);
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
 
-            uint32_t derivativeLocation = glGetUniformLocation(shader->program, "derivativeTexture");
-            glUniform1i(derivativeLocation, 1);
-            glActiveTexture(GL_TEXTURE0 + 1);
-            glBindTexture(GL_TEXTURE_2D, derivativeDFT.texture);
             flatscreen.draw(shader);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         }
+
+        //if (stageUpTo >= LAPLACIAN) {
+        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > LAPLACIAN ? labplacianDFT.framebuffer : 0);
+        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //    shader = shaders["laplacian"];
+        //    shader->use();
+        //    shader->setMatFour("projection", ortho);
+
+        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+        //    glUniform1i(colorLocation, 0);
+        //    glActiveTexture(GL_TEXTURE0 + 0);
+        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
+        //    flatscreen.draw(shader);
+        //}
+        //if (stageUpTo >= SOBEL) {
+        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > SOBEL ? sobelDFT.framebuffer : 0);
+        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //    shader = shaders["sobel"];
+        //    shader->use();
+        //    shader->setMatFour("projection", ortho);
+
+        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+        //    glUniform1i(colorLocation, 0);
+        //    glActiveTexture(GL_TEXTURE0 + 0);
+        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
+        //    flatscreen.draw(shader);
+        //}
+        //if (stageUpTo >= DERIVATIVE) {
+        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > DERIVATIVE ? derivativeDFT.framebuffer : 0);
+        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //    shader = shaders["derivative"];
+        //    shader->use();
+        //    shader->setMatFour("projection", ortho);
+
+        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+        //    glUniform1i(colorLocation, 0);
+        //    glActiveTexture(GL_TEXTURE0 + 0);
+        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
+        //    flatscreen.draw(shader);
+        //}
+        //if (stageUpTo >= ETF) {
+
+        //     
+        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > ETF ? ETF1DTF.framebuffer : 0);
+        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //    shader = shaders["etf"];
+        //    shader->use();
+        //    shader->setMatFour("projection", ortho);
+
+        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+        //    glUniform1i(colorLocation, 0);
+        //    glActiveTexture(GL_TEXTURE0 + 0);
+        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
+
+        //    uint32_t derivativeLocation = glGetUniformLocation(shader->program, "derivativeTexture");
+        //    glUniform1i(derivativeLocation, 1);
+        //    glActiveTexture(GL_TEXTURE0 + 1);
+        //    glBindTexture(GL_TEXTURE_2D, derivativeDFT.texture);
+        //    flatscreen.draw(shader);
+
+        //}
 
 
 
