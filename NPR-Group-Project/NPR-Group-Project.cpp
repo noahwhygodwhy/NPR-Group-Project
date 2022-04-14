@@ -64,7 +64,8 @@ DFT gaussianDFT;
 DFT labplacianDFT;
 DFT sobelDFT;
 DFT derivativeDFT;
-DFT ETFDTF;
+DFT ETF1DTF;
+DFT ETF2DTF;
 
 
 void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
@@ -108,7 +109,8 @@ void genFrameBuffers() {
     regenFrameBuffer(labplacianDFT);
     regenFrameBuffer(sobelDFT);
     regenFrameBuffer(derivativeDFT);
-    regenFrameBuffer(ETFDTF);
+    regenFrameBuffer(ETF1DTF);
+    regenFrameBuffer(ETF2DTF);
 }
 
 
@@ -436,7 +438,9 @@ int main()
             flatscreen.draw(shader);
         }
         if (stageUpTo >= ETF) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > ETF ? ETFDTF.framebuffer : 0);
+
+             
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > ETF ? ETF1DTF.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["etf"];
@@ -453,6 +457,28 @@ int main()
             glActiveTexture(GL_TEXTURE0 + 1);
             glBindTexture(GL_TEXTURE_2D, derivativeDFT.texture);
             flatscreen.draw(shader);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
 
 

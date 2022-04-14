@@ -21,7 +21,7 @@ float ws(ivec2 x, ivec2 y) {
 float wm(vec2 gx, vec2 gy) {
 	float weirdN = 1.0f;
 
-	return 0.5f * (1.0f + tanh(weirdN * (length(gy) - length(gx))));
+	return 0.5f * (1.0f + atan(weirdN * (length(gy) - length(gx))));
 }
 float wd(vec2 tx, vec2 ty) {
 	return dot(tx, ty);
@@ -57,8 +57,8 @@ void main()
 			vec2 gX = texelFetch(derivativeTexture, currCoord, 0).xy;
 			vec2 gY = texelFetch(derivativeTexture, theCoord, 0).xy;
 
-			vec2 tX = vec2(-gX.y, gX.x);
-			vec2 tY = vec2(-gY.y, gY.x);
+			vec2 tX = normalize(vec2(-gX.y, gX.x));
+			vec2 tY = normalize(vec2(-gY.y, gY.x));
 
 			float phiVal = phi(tX, tY);
 			float wdVal = wd(tX, tY);

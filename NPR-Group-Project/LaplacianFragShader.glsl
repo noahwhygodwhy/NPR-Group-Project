@@ -11,6 +11,8 @@ uniform sampler2D colorTexture;
 void main()
 {
 
+	vec4 asdf = texelFetch(colorTexture, ivec2(gl_FragCoord.xy), 0);
+
 	float kernel[9] = float[9](
 		-1.0f, -1.0f, -1.0f, 
 		-1.0f, 8.0f, -1.0f, 
