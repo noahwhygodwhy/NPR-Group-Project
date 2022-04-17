@@ -26,6 +26,7 @@ enum Stages {
     COLOR,
     GAUSSIAN,
     KUWAHARA,
+    KUWAHARA_TWO,
     //LAPLACIAN,
     //SOBEL,
     //DERIVATIVE,
@@ -45,8 +46,8 @@ Stages stageUpTo = COLOR;
 double deltaTime = 0.0f;	// Time between current frame and last frame
 double lastFrame = 0.0f; // Time of last frame
 
-int screenX = 1000;
-int screenY = 1000;
+int screenX = 1280;
+int screenY = 720;
 
 int kuwaharaX = 5;
 int kuwaharaY = 5;
@@ -249,7 +250,8 @@ int main()
     exit(-1);*/
 
 
-    Video theVideo("C:/Users/noahm/OneDrive/Desktop/sample.mp4");
+    Video theVideo("nationaltreasure.mp4");
+
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -258,7 +260,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
     glfwWindowHint(GLFW_SRGB_CAPABLE, 1);
     glfwWindowHint(GLFW_SAMPLES, 16);
-    GLFWwindow* window = glfwCreateWindow(1000, 1000, "Title Goes here", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(screenX, screenY, "", NULL, NULL);
 
     if (window == NULL)
     {
@@ -293,12 +295,13 @@ int main()
     Screen flatscreen;
 
     vector<Model*> models;
-    models.push_back(new Model("backpack"));
+    //models.push_back(new Model("backpack"));
     //models.push_back(new Model("dedust"));
 
     shaders["object"] = new Shader("object.vert", "object.frag");
     shaders["color"] = new Shader("KuwaharaVertShader.glsl", "BasicColorFragShader.glsl");
     shaders["kuwahara"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
+    shaders["kuwaharatwo"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
     shaders["gaussian"] = new Shader("KuwaharaVertShader.glsl", "GaussianBlurFragShader.glsl");
     shaders["derivative"] = new Shader("KuwaharaVertShader.glsl", "DerivativeFragShader.glsl");
     shaders["laplacian"] = new Shader("KuwaharaVertShader.glsl", "LaplacianFragShader.glsl");
@@ -314,8 +317,6 @@ int main()
 
 
 
-
-    mat4 ortho = glm::ortho(0.0f, 1.0f, 0.0f, float(screenX)/float(screenY));
 
 
     unsigned int fakeVAO, fakeEBO, fakeVBO;
@@ -358,6 +359,14 @@ int main()
 
     //int sampleTexture = textureFromFile("sample.png");
 
+    glDeleteTextures(1, &frameTextureID);
+    glGenTextures(1, &frameTextureID);
+    glBindTexture(GL_TEXTURE_2D, frameTextureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     while (!glfwWindowShouldClose(window)) {
         double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -383,39 +392,8 @@ int main()
             if(i%100==0)
             printf("%i, %i, %i\n", theFrame[i + 0], theFrame[i + 1], theFrame[i + 2]);
         }*/
-        //glDeleteTextures(1, &frameTextureID);
-        glGenTextures(1, &frameTextureID);
         glBindTexture(GL_TEXTURE_2D, frameTextureID);
-
-        uint8_t* dataHere = theVideo.getFrame();
-
-       /*for (uint64_t i = 0; i < theVideo.width * theVideo.height; i += 3) {
-            if(i%100==0)
-            printf("%i, %i, %i\n", data[i + 0], data[i + 1], data[i + 2]);
-        }*/
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-        //uint64_t i = theVideo.width*theVideo.height*2;
-        /*try{
-            for (; i < theVideo.width * theVideo.height*4; i++) {
-                printf("%lu: %i\n",i, dataHere[i]%2);
-            }
-        }
-        catch(exception e) {
-            printf("exeption at i: %lu\n", i);
-        }*/
-
-        //uint8_t* otherData = new uint8_t[theVideo.width * theVideo.height * 3]();
-        printf("about to copy\n");
-        //memcpy(otherData, dataHere, theVideo.width * theVideo.height * 3);
-        printf("copied\n");
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, dataHere);
-
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, theVideo.getFrame(currentFrame));
         glBindTexture(GL_TEXTURE_2D, 0);
 
 
@@ -426,7 +404,6 @@ int main()
 
         float sinit = (sin(viewAngle / 5.0f));
         float cosit = (cos(viewAngle / 5.0f));
-        float ratio = (float)screenX / (float)screenY;
 
         vec3 eye = vec3(sinit * 5.0f, 5.0f, cosit * 5.0f);
         //vec3 eye = vec3(5.0f, 200.0f, 5.0f);//for dedust
@@ -434,26 +411,15 @@ int main()
         mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
 
 
+        float ratio = (float)screenY / (float)screenX;
 
         if (stageUpTo >= COLOR) {
-            /*glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo>COLOR?colorDFT.framebuffer:0);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["object"];
-            shader->use();
-            shader->setVecThree("eyePos", eye);
-            shader->setMatFour("view", view);
-            for (Model* m : models) {
-                shader->setMatFour("projection", glm::perspective(glm::radians(40.0f), ratio, 0.01f, 100.0f));
-                m->draw(shader);
-            }
-        */
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > COLOR ? 0 : 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > COLOR ? colorDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["color"];
             shader->use();
-            shader->setMatFour("projection", ortho);
+            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
 
             uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
             glUniform1i(colorLocation, 0);
@@ -468,7 +434,7 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["gaussian"];
             shader->use();
-            shader->setMatFour("projection", ortho);
+            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
             glUniform1fv(glGetUniformLocation(shader->program, "gaussianKernel"), gaussianSize * gaussianSize, gaussianKernel);
 
             uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
@@ -483,7 +449,25 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["kuwahara"];
             shader->use();
-            shader->setMatFour("projection", ortho);
+            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+
+            shader->setInt("kernalWidth", kuwaharaX);
+            shader->setInt("kernalHeight", kuwaharaY);
+
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+            glUniform1i(colorLocation, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
+
+            flatscreen.draw(shader);
+        }
+        if (stageUpTo >= KUWAHARA_TWO) {
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > KUWAHARA_TWO ? kuwaharaDFT.framebuffer : 0);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader = shaders["kuwaharatwo"];
+            shader->use();
+            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
 
             shader->setInt("kernalWidth", kuwaharaX);
             shader->setInt("kernalHeight", kuwaharaY);

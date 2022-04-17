@@ -20,7 +20,7 @@ public:
 	int height;
 	int channels;
 	int streamIndex;
-	uint8_t* getFrame();
+	uint8_t* getFrame(double currentFrame);
 	void freeFrame();
 private:
 	AVFormatContext* formatContext;
@@ -29,6 +29,7 @@ private:
 	AVCodec* codec;
 	AVCodecContext* codecContext;
 	AVFrame* frame;
+	uint8_t* data;
 };
 
 

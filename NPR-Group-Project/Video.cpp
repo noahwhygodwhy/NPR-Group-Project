@@ -15,7 +15,6 @@ Video::Video(string videoFileName)
 
 	int status = avformat_open_input(&this->formatContext, videoFileName.c_str(), NULL, NULL);
 
-
 	av_dump_format(this->formatContext, 0, 0, 0);
 
 
@@ -69,6 +68,7 @@ Video::Video(string videoFileName)
 
 	frame = av_frame_alloc();
 
+	this->data = new uint8_t[width * height * 3]();
 
 }
 
@@ -81,20 +81,15 @@ Video::~Video()
 //http://dranger.com/ffmpeg/tutorial01.html
 //just to get a sample to actually do the shader on
 //https://www.youtube.com/watch?v=W6Yx3injNZs
-uint8_t* Video::getFrame() {
+uint8_t* Video::getFrame(double currentTime) {
+	//printf("getting frame at time: %f\n", currentTime);
+	//int seekRes = avformat_seek_file(formatContext, streamIndex, 0, (int)(currentTime*50), (int)(currentTime*50), AVSEEK_FLAG_FRAME);
+	//int seekRes = av_seek_frame(formatContext, -1, currentTime, AVSEEK_FLAG_ANY | AVSEEK_FLAG_BACKWARD);
+	//avcodec_flush_buffers(codecContext);
+	//printf("seek res result: %i\n", seekRes);
 
-
-
-	//av_image_fill_arrays(RGBframe->data, RGBframe->linesize, frame->data[0], AV_PIX_FMT_RGB24, this->width, this->height, 1);
-	//avpicture_fill((AVPicture*)RGBframe->data, buffer, AV_PIX_FMT_RGB24,codecContext->width, codecContext->height);
-	int frameFinished;
 	AVPacket* packet = av_packet_alloc();
-	// initialize SWS context for software scaling
 	
-
-
-
-
 	while (av_read_frame(this->formatContext, packet) >= 0) {
 
 		if (packet->stream_index != this->streamIndex) {
@@ -140,10 +135,7 @@ uint8_t* Video::getFrame() {
 
 
 
-
-	uint8_t* data = new uint8_t[width * height * 4]();
-
-	uint8_t* dest[4] = {data, 0, 0, 0};
+	uint8_t* dest[4] = { data, 0, 0, 0 };
 	int destLinesize[4] = { frame->width * 3, 0, 0, 0 };
 	sws_scale(swsContext, frame->data, frame->linesize, 0, frame->height, dest, destLinesize );
 
@@ -156,6 +148,8 @@ uint8_t* Video::getFrame() {
 	}*/
 
 
+
+	sws_freeContext(swsContext);
 
 
 
