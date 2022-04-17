@@ -172,6 +172,7 @@
     <None Include="fragShader.glsl" />
     <None Include="GaussianBlurFragShader.glsl" />
     <None Include="KuwaharaFragShader.glsl" />
+    <None Include="kuwaharaTwoFragShader.glsl" />
     <None Include="KuwaharaVertShader.glsl" />
     <None Include="LaplacianFragShader.glsl" />
     <None Include="lineFragShader.glsl" />

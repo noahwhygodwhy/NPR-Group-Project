@@ -291,7 +291,9 @@ unsigned int textureFromFile(const char* path, const string& directory)
 
     int width, height, nrComponents;
 
+
     unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    printf("read in image width %i height %i comp %i\n", width, height, nrComponents);
     if (data)
     {
         GLenum format;
@@ -299,7 +301,7 @@ unsigned int textureFromFile(const char* path, const string& directory)
             format = GL_RED;
         else if (nrComponents == 3)
             format = GL_RGB;
-        else if (nrComponents == 4)
+        else
             format = GL_RGBA;
 
         glBindTexture(GL_TEXTURE_2D, textureID);

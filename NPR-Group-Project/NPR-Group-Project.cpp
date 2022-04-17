@@ -22,6 +22,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+
+
+
+
 enum Stages {
     COLOR,
     GAUSSIAN,
@@ -258,7 +262,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-    glfwWindowHint(GLFW_SRGB_CAPABLE, 1);
+    //glfwWindowHint(GLFW_SRGB_CAPABLE, 1);
     glfwWindowHint(GLFW_SAMPLES, 16);
     GLFWwindow* window = glfwCreateWindow(screenX, screenY, "", NULL, NULL);
 
@@ -285,7 +289,7 @@ int main()
     //glFrontFace(GL_CCW);
     //glEnable(GL_CULL_FACE);
     glDisable(GL_CULL_FACE);
-    glEnable(GL_FRAMEBUFFER_SRGB);
+    //glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_DEPTH_TEST);
 
 
@@ -301,7 +305,7 @@ int main()
     shaders["object"] = new Shader("object.vert", "object.frag");
     shaders["color"] = new Shader("KuwaharaVertShader.glsl", "BasicColorFragShader.glsl");
     shaders["kuwahara"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
-    shaders["kuwaharatwo"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
+    shaders["kuwaharatwo"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaTwoFragShader.glsl");
     shaders["gaussian"] = new Shader("KuwaharaVertShader.glsl", "GaussianBlurFragShader.glsl");
     shaders["derivative"] = new Shader("KuwaharaVertShader.glsl", "DerivativeFragShader.glsl");
     shaders["laplacian"] = new Shader("KuwaharaVertShader.glsl", "LaplacianFragShader.glsl");
@@ -367,6 +371,9 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+
+    frameTextureID = textureFromFile("clock.jpg", "./");
+
     while (!glfwWindowShouldClose(window)) {
         double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -392,9 +399,13 @@ int main()
             if(i%100==0)
             printf("%i, %i, %i\n", theFrame[i + 0], theFrame[i + 1], theFrame[i + 2]);
         }*/
-        glBindTexture(GL_TEXTURE_2D, frameTextureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, theVideo.getFrame(currentFrame));
-        glBindTexture(GL_TEXTURE_2D, 0);
+
+
+        
+
+        //glBindTexture(GL_TEXTURE_2D, frameTextureID);
+        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, theVideo.getFrame(currentFrame));
+        //glBindTexture(GL_TEXTURE_2D, 0);
 
 
 
@@ -461,7 +472,7 @@ int main()
 
             flatscreen.draw(shader);
         }
-        if (stageUpTo >= KUWAHARA_TWO) {
+       /* if (stageUpTo >= KUWAHARA_TWO) {
             glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > KUWAHARA_TWO ? kuwaharaDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -478,7 +489,7 @@ int main()
             glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
 
             flatscreen.draw(shader);
-        }
+        }*/
 
         //if (stageUpTo >= LAPLACIAN) {
         //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > LAPLACIAN ? labplacianDFT.framebuffer : 0);
