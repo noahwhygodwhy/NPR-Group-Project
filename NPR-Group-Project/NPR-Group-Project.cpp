@@ -12,6 +12,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION  
+#include "stb_image_write.h"
 
 
 
@@ -19,6 +21,8 @@ using namespace std;
 using namespace glm;
 
 
+
+//bunch of initialized values
 enum Stages {
     COLOR,
     GAUSSIAN,
@@ -26,22 +30,20 @@ enum Stages {
     SOBEL,
     COMPOSITE,
     MAX_STAGE
-
-
 };
 
-
 Stages stageUpTo = COLOR;
-//constexpr int maxStage = 9;
 
-double deltaTime = 0.0f;	// Time between current frame and last frame
+double deltaTime = 0.0f; // Time between current frame and last frame
 double lastFrame = 0.0f; // Time of last frame
 
-int screenX = 1000;
-int screenY = 1280;
+int screenX = 500;
+int screenY = 500;
 
 int kuwaharaX = 5;
 int kuwaharaY = 5;
+
+bool outputFrame = false;
 
 
 //drawn framebuffer texture
@@ -60,6 +62,7 @@ DFT sobelDFT;
 DFT kuwaharaDFT;
 
 
+//generates a framebuffer/texture/rbo combo for a new screen size
 void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
 
     glDeleteRenderbuffers(1, &dft.RBO);
@@ -81,6 +84,7 @@ void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, dft.RBO);
 }
 
+//debug function
 void GLAPIENTRY MessageCallback(GLenum source,
     GLenum type,
     GLuint id,
@@ -94,7 +98,7 @@ void GLAPIENTRY MessageCallback(GLenum source,
         type, severity, message);
 }
 
-
+//helper function to regen all of the intermediate frame buffers
 void genFrameBuffers() {
     regenFrameBuffer(colorDFT);
     regenFrameBuffer(gaussianDFT);
@@ -106,19 +110,22 @@ void genFrameBuffers() {
 
 
 
-//prereq output is an allocated size array of floats
-void create1DGaussianKernel(float stdDev, int size, float* output) {
+//saves the glfw window to a file. copied this from some stack overflow post
+void saveImage(string filepath, GLFWwindow* w) {
 
-    float a = 2.0f * stdDev * stdDev;
-    float lower = 1.0f / sqrt(glm::pi<float>() * a);
+    int width, height;
+    glfwGetFramebufferSize(w, &width, &height);
+    GLsizei nrChannels = 4;
+    GLsizei stride = nrChannels * width;
+    stride += (stride % 4) ? (4 - stride % 4) : 0;
+    GLsizei bufferSize = stride * height;
+    std::vector<float> buffer(bufferSize);
+    glPixelStorei(GL_PACK_ALIGNMENT, 4);
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data());
 
-
-    int halfSize = size / 2;
-
-    for (int x = -halfSize; x <= halfSize; x++) {
-        float upper =  -((x * x) / a);
-        output[x+ halfSize] = lower * exp(upper);
-    }
+    stbi_flip_vertically_on_write(true);
+    stbi_write_png(("out/"+filepath).c_str(), width, height, nrChannels, buffer.data(), stride);
 }
 
 
@@ -139,20 +146,25 @@ void create2DGaussianKernel(float stdDev, int size, float* output) {
 
 }
 
+
+
+//on screen size change
 void frameBufferSizeCallback(GLFWwindow* window, int width, int height) {
-
-
     screenX = width;
     screenY = height;
     glViewport(0, 0, width, height);
     genFrameBuffers();
 }
+
+
+//every frame key processing
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
 }
+//any time key proecssing
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
@@ -189,25 +201,31 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         kuwaharaY = glm::max(kuwaharaY - 1, 0);
         printf("kuwaharaX: %i\n", kuwaharaY);
     }
-
-}
-
-vec4 calculatePolarPoints(const vec3& point, const vec2& polarCenter) {
-    vec2 transPoint = vec2(point.x - 0.5, point.y - 0.5);
-    double theta = atan2(transPoint.x, transPoint.y);
-    if (point.y < 0.0) {
-        theta += (2.0 * glm::pi<double>());
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        outputFrame = true;
     }
-    double r = length(transPoint);
-     
-    return vec4(point.x, point.y, r, theta);
+
+
+}
+
+
+//duh
+string getTimeString() {
+    time_t now;
+    time(&now);
+    char buf[sizeof "####-##-##-##-##-##"];
+    strftime(buf, sizeof buf, "%F-%H-%M-%S", gmtime(&now));
+    return string(buf);
 }
 
 
 
+
+
+//get a opengl texture from a file. path is the path, width and height give you the ints, directory if it's not a local file
 unsigned int textureFromFile(const char* path, int& widthOut, int& heightOut, const string& directory = "./")
 {
-    //stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(true);
     string filename = string(path);
     filename = directory + '/' + filename;
 
@@ -346,11 +364,9 @@ int main()
     float frameTimes[30](0);
     int lastSecondFrameCount = -1;
 
-
     mat4 orth = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f);
 
     while (!glfwWindowShouldClose(window)) {
-
 
         //more fps stuff
         double currentFrame = glfwGetTime();
@@ -358,6 +374,8 @@ int main()
         lastFrame = currentFrame;
 
         frameCounter++;
+
+
         if (int(currentFrame) > lastSecondFrameCount) {
             lastSecondFrameCount = int(currentFrame);
             float sum = 0;
@@ -396,7 +414,7 @@ int main()
             //draw it
             flatscreen.draw(shader);
         }
-
+//gaussian stage
         if (stageUpTo >= GAUSSIAN) {
             glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > GAUSSIAN ? gaussianDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -412,6 +430,7 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorDFT.texture);
             flatscreen.draw(shader);
         }
+//kuwahara stage
         if (stageUpTo >= KUWAHARA) {
             glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > KUWAHARA ? kuwaharaDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -430,7 +449,7 @@ int main()
 
             flatscreen.draw(shader);
         }
-
+//sobel stage
         if (stageUpTo >= SOBEL) {
             glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > SOBEL ? sobelDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -445,7 +464,7 @@ int main()
             glBindTexture(GL_TEXTURE_2D, kuwaharaDFT.texture);
             flatscreen.draw(shader);
         }
-
+//put it all together stage
         if (stageUpTo >= COMPOSITE) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -469,12 +488,22 @@ int main()
             glUniform1i(canvasloc, 2);
             glActiveTexture(GL_TEXTURE0 + 2);
             glBindTexture(GL_TEXTURE_2D, canvasTextureID);
-
             flatscreen.draw(shader);
         }
+
+
         processInput(window);
         glfwSwapBuffers(window);
+
+        if (outputFrame) {
+            saveImage(getTimeString() + string(".png"), window);
+            printf("outputing frame\n");
+            outputFrame = false;
+        }
+
         glfwPollEvents();
+
+
         //cin.get();
     }
 }

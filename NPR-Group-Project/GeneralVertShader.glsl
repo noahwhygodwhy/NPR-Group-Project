@@ -5,6 +5,9 @@ layout (location = 0) in vec2 aPos;
 uniform mat4 projection;
 
 out vec2 fraguv;
+
+//super basic vert shader
+
 void main()
 {
     fraguv = aPos;

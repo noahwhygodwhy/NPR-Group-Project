@@ -13,6 +13,8 @@ float avgRGB(vec3 i) {
 mat3 ka = mat3(1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0);
 mat3 kb = mat3(1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0);
 
+
+//sobel operator to detect edges. uses abs() to disreguard image flow
 void main() 
 {
 

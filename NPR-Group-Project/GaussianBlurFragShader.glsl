@@ -4,14 +4,11 @@ out vec4 FragColor;
 
 in vec2 fraguv;
 
-uniform int width;
-uniform int height;
-
 uniform float gaussianKernel[49];
 
-
-
 uniform sampler2D colorTexture;
+
+//this takes a etxture, and a gauusian kernel, and outputs the blurred version
 
 void main()
 {
@@ -30,5 +27,4 @@ void main()
 
 
 	FragColor = vec4(color, 1.0f);
-	//FragColor = texture(colorTexture, fraguv);
 }

@@ -18,14 +18,8 @@ float rand(inout vec2 co){
     return toReturn;
 }
 
-//TODO: these might be bakcwards
 mat3 kX = mat3(1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0);
 mat3 kY = mat3(1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0);
-
-
-//vec2 pixelToUV(vec2 fragCoord){
-//    return fragCoord/vec2(width, height);
-//}
 
 
 
@@ -33,7 +27,7 @@ float avgRGB(vec3 i) {
     return (i.r + i.g + i.b)/3.0;
 }
 
-
+//gets the angle of the local flow of the image
 float getAngle(){
     ivec2 maxSize = textureSize(colorTexture, 0);
 
@@ -54,19 +48,20 @@ float getAngle(){
     return atan(sX / sY);
 }
 
+
+//gets the mean and variance inside a quadrant of neighbors
 void getMeanAndVariance(in ivec2 xRange, in ivec2 yRange, in mat2 rotMatrix, out vec3 mean, out float variance) {
     ivec2 maxSize = textureSize(colorTexture, 0);
-
     vec2 pixelSize = vec2(1.0)/vec2(maxSize);
-
     vec2 base = gl_FragCoord.xy;
+
     mean = vec3(0);
     vec3 channelvariance = vec3(0);
     int samples = 0;
+
     for(int x = xRange.x; x < xRange.y; x++) {
         for(int y = yRange.x; y < yRange.y; y++) {
             vec2 pixelCoord = vec2(fraguv+((pixelSize*vec2(x, y)*rotMatrix)));
-
             vec3 pixelColor = texture(colorTexture, pixelCoord).xyz;
 
             mean += pixelColor;
@@ -82,36 +77,27 @@ void getMeanAndVariance(in ivec2 xRange, in ivec2 yRange, in mat2 rotMatrix, out
 
 void main() 
 {
-//random kernel size?
 
-    vec2 randState = fraguv;
-
+    //get the local image flow angle
     float localAngle = getAngle();
 
-
+    //and create a rotation matrix for the kernel
     mat2 rotMat = mat2(cos(localAngle), -sin(localAngle), sin(localAngle), cos(localAngle));
-
-    /*FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    return;*/
-
-
-
-    float minVariance = 1000000000000000000.0;
+   
+    float minVariance = 1000000000000000000.0;//NO FLOAT_INF? :(
     vec3 minMean = vec3(0);
     float possibleVariance = 0.0;
     vec3 possibleMean = vec3(0);
-
-
     float differentAmmount = 0;
 
 
+    //Applies the kuwahara kernel
 
     getMeanAndVariance(ivec2(-kernalWidth, 0), ivec2(-kernalHeight, 0),rotMat, possibleMean, possibleVariance);
     int itLess = int(possibleVariance<minVariance);
     int itGreater = 1-itLess;
     minVariance = (itLess*possibleVariance)+(itGreater*minVariance);
     minMean = (itLess*possibleMean)+(itGreater*minMean);
-    
     differentAmmount += abs(possibleVariance-minVariance);
 
     getMeanAndVariance(ivec2(0, kernalWidth), ivec2(-kernalHeight, 0),rotMat, possibleMean, possibleVariance);
