@@ -167,6 +167,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BasicColorFragShader.glsl" />
+    <None Include="compositeFragShader.glsl" />
     <None Include="depthFragShader.glsl" />
     <None Include="etfFragShader.glsl" />
     <None Include="fragShader.glsl" />

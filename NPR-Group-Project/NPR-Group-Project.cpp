@@ -30,9 +30,9 @@ enum Stages {
     COLOR,
     GAUSSIAN,
     KUWAHARA,
-    KUWAHARA_TWO,
-    //LAPLACIAN,
-    //SOBEL,
+    SOBEL,
+    LAPLACIAN,
+    COMPOSITE,
     //DERIVATIVE,
     //ETF,
     MAX_STAGE
@@ -44,14 +44,14 @@ using namespace std;
 using namespace glm;
 
 int shaderMode = 1;
-Stages stageUpTo = COLOR;
+Stages stageUpTo = KUWAHARA;
 //constexpr int maxStage = 9;
 
 double deltaTime = 0.0f;	// Time between current frame and last frame
 double lastFrame = 0.0f; // Time of last frame
 
-int screenX = 1280;
-int screenY = 720;
+int screenX = 1000;
+int screenY = 1280;
 
 int kuwaharaX = 5;
 int kuwaharaY = 5;
@@ -78,6 +78,7 @@ DFT derivativeDFT;
 DFT ETF1DTF;
 DFT ETF2DTF;
 DFT kuwaharaDFT;
+DFT compositeDFT;
 
 
 void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
@@ -124,6 +125,7 @@ void genFrameBuffers() {
     regenFrameBuffer(ETF1DTF);
     regenFrameBuffer(ETF2DTF);
     regenFrameBuffer(kuwaharaDFT);
+    regenFrameBuffer(compositeDFT);
 }
 
 
@@ -312,6 +314,7 @@ int main()
     shaders["sobel"] = new Shader("KuwaharaVertShader.glsl", "sobelFragShader.glsl");
     shaders["derivative"] = new Shader("KuwaharaVertShader.glsl", "DerivativeFragShader.glsl");
     shaders["etf"] = new Shader("KuwaharaVertShader.glsl", "etfFragShader.glsl");
+    shaders["composite"] = new Shader("KuwaharaVertShader.glsl", "compositeFragShader.glsl");
 
 
 
@@ -372,7 +375,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
-    frameTextureID = textureFromFile("clock.jpg", "./");
+    //  frameTextureID = textureFromFile("monkey.png", "./");
 
     while (!glfwWindowShouldClose(window)) {
         double currentFrame = glfwGetTime();
@@ -403,9 +406,9 @@ int main()
 
         
 
-        //glBindTexture(GL_TEXTURE_2D, frameTextureID);
-        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, theVideo.getFrame(currentFrame));
-        //glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D, frameTextureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, theVideo.getFrame(currentFrame));
+        glBindTexture(GL_TEXTURE_2D, 0);
 
 
 
@@ -472,6 +475,61 @@ int main()
 
             flatscreen.draw(shader);
         }
+
+
+        if (stageUpTo >= LAPLACIAN) {
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > LAPLACIAN ? labplacianDFT.framebuffer : 0);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader = shaders["laplacian"];
+            shader->use();
+            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+            glUniform1i(colorLocation, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, kuwaharaDFT.texture);
+            flatscreen.draw(shader);
+        }
+        if (stageUpTo >= SOBEL) {
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > SOBEL ? sobelDFT.framebuffer : 0);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader = shaders["sobel"];
+            shader->use();
+            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+            glUniform1i(colorLocation, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, kuwaharaDFT.texture);
+            flatscreen.draw(shader);
+        }
+
+        if (stageUpTo >= COMPOSITE) {
+            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > COMPOSITE ? compositeDFT.framebuffer : 0);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader = shaders["composite"];
+            shader->use();
+            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+            glUniform1fv(glGetUniformLocation(shader->program, "gaussianKernel"), gaussianSize * gaussianSize, gaussianKernel);
+
+            uint32_t lapLocation = glGetUniformLocation(shader->program, "laplacianTexture");
+            glUniform1i(lapLocation, 0);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, sobelDFT.texture);
+
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "kuwaharaTexture");
+            glUniform1i(colorLocation, 1);
+            glActiveTexture(GL_TEXTURE0 + 1);
+            glBindTexture(GL_TEXTURE_2D, kuwaharaDFT.texture);
+
+            flatscreen.draw(shader);
+        }
+
+
+
        /* if (stageUpTo >= KUWAHARA_TWO) {
             glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > KUWAHARA_TWO ? kuwaharaDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

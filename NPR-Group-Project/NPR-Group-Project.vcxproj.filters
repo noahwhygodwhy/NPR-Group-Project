@@ -170,5 +170,8 @@
     <None Include="kuwaharaTwoFragShader.glsl">
       <Filter>Shaders\Paint Shaders</Filter>
     </None>
+    <None Include="compositeFragShader.glsl">
+      <Filter>Shaders\Paint Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
