@@ -32,7 +32,7 @@ enum Stages {
     MAX_STAGE
 };
 
-Stages stageUpTo = COLOR;
+Stages stageUpTo = SOBEL;
 
 double deltaTime = 0.0f; // Time between current frame and last frame
 double lastFrame = 0.0f; // Time of last frame
@@ -259,8 +259,9 @@ unsigned int textureFromFile(const char* path, int& widthOut, int& heightOut, co
     }
     else
     {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
+        printf("Texture failed to load at path: %s", path);
         stbi_image_free(data);
+        exit(0);
     }
     heightOut = height;
     widthOut = width;
@@ -301,8 +302,13 @@ void printInfo(float fps) {
 
 unordered_map<string, Shader*> shaders;
 Shader* shader;
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 2) {
+        printf("usage: <executable name> <inputFileName.jpg/png> <outputFileName.png>\ninput must be file in same directory\noutput file has to be a png*");
+        exit(0);
+    }
+
 
 //***********Initialize opengl stuff
     glfwInit();
@@ -355,7 +361,7 @@ int main()
 //load images, including input
     int width, height;
     GLuint canvasTextureID = textureFromFile("canvas.jpg", width, height);
-    GLuint frameTextureID = textureFromFile("rit.jpg", width, height);
+    GLuint frameTextureID = textureFromFile(argv[1], width, height);
     glfwSetWindowSize(window, width, height);
     frameBufferSizeCallback(window, width, height);
 

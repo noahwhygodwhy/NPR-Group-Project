@@ -42,7 +42,7 @@ void main()
 	vec3 borderColor = gaussianSobel();
 
 	//adding in extra value around the edges to make it look like paint strokes
-	vec3 color = (kuwaColor)+ (borderColor*kuwaColor);
+	vec3 color = (kuwaColor)+ (borderColor*kuwaColor*0.2);
 	
 	//the sampled color of the canvas image
 	vec3 canvasColor = texture(canvasTexture, fraguv*ratio).xyz;
