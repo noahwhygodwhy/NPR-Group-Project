@@ -8,9 +8,6 @@ void Screen::draw(Shader* shader) const {
 	glBindVertexArray(0);
 }
 
-
-
-
 Screen::Screen()
 {
 	this->vertices = {
