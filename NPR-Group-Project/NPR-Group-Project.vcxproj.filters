@@ -16,12 +16,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{d47c892c-508c-4bd5-bcbf-e73c7c65e9cf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders\Triangle Shaders">
-      <UniqueIdentifier>{7d5639f5-58e0-4e16-8691-c485685544a2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Shaders\Paint Shaders">
-      <UniqueIdentifier>{c353bde5-7cc5-461b-b9fc-72477cdcf505}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NPR-Group-Project.cpp">
@@ -33,16 +27,7 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DTriangle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Video.cpp">
+    <ClCompile Include="Screen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,122 +41,32 @@
     <ClInclude Include="Shader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Model.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Screen.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stb_image_write.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DTriangle.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="delaunator.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vec2Hash.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Video.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="simple.vert">
+    <None Include="SobelFragShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="simple.frag">
+    <None Include="BasicColorFragShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="object.frag">
+    <None Include="CompositeFragShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="object.vert">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="vertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="normalFragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="lineVertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="lineFragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="fragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="depthFragShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="simpleVertShader.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="simpleFragShader.glsl">
+    <None Include="GaussianBlurFragShader.glsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="KuwaharaFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="KuwaharaVertShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="pointVertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="pointFragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="tempPointDisplayFragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="thirdFragShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="thirdVertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="tempPointDisplayVertShader.glsl">
-      <Filter>Shaders\Triangle Shaders</Filter>
-    </None>
-    <None Include="sobelFragShader.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="sobelVertShader.glsl">
+    <None Include="GeneralVertShader.glsl">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="DerivativeFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="GaussianBlurFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="LaplacianFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="etfFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="BasicColorFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="kuwaharaTwoFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
-    </None>
-    <None Include="compositeFragShader.glsl">
-      <Filter>Shaders\Paint Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

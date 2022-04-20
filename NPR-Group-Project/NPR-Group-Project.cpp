@@ -1,29 +1,22 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-#include <unordered_set>
-#include <set>
-#include <array>
+
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtx/norm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+
 #include "Shader.hpp"
-#include "Model.hpp"
 #include "Screen.hpp"
-#include "DTriangle.hpp"
-#include "vec2Hash.hpp"
-#include "delaunator.hpp"
 
-#include "Video.hpp"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 
 
+using namespace std;
+using namespace glm;
 
 
 enum Stages {
@@ -31,20 +24,14 @@ enum Stages {
     GAUSSIAN,
     KUWAHARA,
     SOBEL,
-    LAPLACIAN,
     COMPOSITE,
-    //DERIVATIVE,
-    //ETF,
     MAX_STAGE
 
 
 };
 
-using namespace std;
-using namespace glm;
 
-int shaderMode = 1;
-Stages stageUpTo = KUWAHARA;
+Stages stageUpTo = COLOR;
 //constexpr int maxStage = 9;
 
 double deltaTime = 0.0f;	// Time between current frame and last frame
@@ -55,10 +42,6 @@ int screenY = 1280;
 
 int kuwaharaX = 5;
 int kuwaharaY = 5;
-
-float viewAngle = 0;
-
-int numberOfPoints = 5000;
 
 
 //drawn framebuffer texture
@@ -74,11 +57,7 @@ DFT colorDFT;
 DFT gaussianDFT;
 DFT labplacianDFT;
 DFT sobelDFT;
-DFT derivativeDFT;
-DFT ETF1DTF;
-DFT ETF2DTF;
 DFT kuwaharaDFT;
-DFT compositeDFT;
 
 
 void regenFrameBuffer(DFT& dft, int width = screenX, int height = screenY) {
@@ -121,11 +100,7 @@ void genFrameBuffers() {
     regenFrameBuffer(gaussianDFT);
     regenFrameBuffer(labplacianDFT);
     regenFrameBuffer(sobelDFT);
-    regenFrameBuffer(derivativeDFT);
-    regenFrameBuffer(ETF1DTF);
-    regenFrameBuffer(ETF2DTF);
     regenFrameBuffer(kuwaharaDFT);
-    regenFrameBuffer(compositeDFT);
 }
 
 
@@ -214,12 +189,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         kuwaharaY = glm::max(kuwaharaY - 1, 0);
         printf("kuwaharaX: %i\n", kuwaharaY);
     }
-    if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
-        viewAngle -= 5.0 / 360.0;
-    }
-    if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
-        viewAngle += 5.0 / 360.0;
-    }
+
 }
 
 vec4 calculatePolarPoints(const vec3& point, const vec2& polarCenter) {
@@ -235,36 +205,93 @@ vec4 calculatePolarPoints(const vec3& point, const vec2& polarCenter) {
 
 
 
-//TODO: use texelfetch not texture()
+unsigned int textureFromFile(const char* path, int& widthOut, int& heightOut, const string& directory = "./")
+{
+    //stbi_set_flip_vertically_on_load(true);
+    string filename = string(path);
+    filename = directory + '/' + filename;
+
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+
+
+    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+    heightOut = height;
+    widthOut = width;
+
+    return textureID;
+}
+
+void clear()
+{
+    #if defined _WIN32
+        system("cls");
+        //clrscr(); // including header file : conio.h
+    #elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
+        system("clear");
+        //std::cout<< u8"\033[2J\033[1;1H"; //Using ANSI Escape Sequences 
+    #elif defined (__APPLE__)
+        system("clear");
+    #endif
+}
+
+void printInfo(float fps) {
+    clear();
+
+    string stage;
+
+    switch (stageUpTo) {
+        case COLOR:stage = "color"; break;
+        case GAUSSIAN:stage = "gaussian"; break;
+        case KUWAHARA:stage = "kuwahara"; break;
+        case SOBEL:stage = "sobel"; break;
+        case COMPOSITE:stage = "composite"; break;
+        default:stage = "broken"; break;
+    }
+
+    printf("Stage: %s\n", stage.c_str());
+    printf("FPS: %f\n", fps);
+}
+
 unordered_map<string, Shader*> shaders;
 Shader* shader;
 int main()
 {
-   /* int size = 7;
 
-    float* x = new float[size*size];
-    
-    create2DGaussianKernel(1.0f, size, x);
-
-
-    for (int i = 0; i < size; i++) {
-        for (int k = 0; k < size; k++) {
-            printf("%f, ", x[(i*size)+k]);
-        }
-        printf("\n");
-    }
-    exit(-1);*/
-
-
-    Video theVideo("nationaltreasure.mp4");
-
-
+//***********Initialize opengl stuff
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-    //glfwWindowHint(GLFW_SRGB_CAPABLE, 1);
     glfwWindowHint(GLFW_SAMPLES, 16);
     GLFWwindow* window = glfwCreateWindow(screenX, screenY, "", NULL, NULL);
 
@@ -276,8 +303,6 @@ int main()
 
     glfwMakeContextCurrent(window);
 
-    
-
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         cout << "GLAD init failed" << endl;
@@ -288,96 +313,46 @@ int main()
 
     glfwSetKeyCallback(window, keyCallback);
 
-    //glFrontFace(GL_CCW);
-    //glEnable(GL_CULL_FACE);
-    glDisable(GL_CULL_FACE);
-    //glEnable(GL_FRAMEBUFFER_SRGB);
-    glEnable(GL_DEPTH_TEST);
+  
 
 
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(MessageCallback, 0);
-
+//initialize the flatscreen triangle to draw stuff on
     Screen flatscreen;
 
-    vector<Model*> models;
-    //models.push_back(new Model("backpack"));
-    //models.push_back(new Model("dedust"));
-
-    shaders["object"] = new Shader("object.vert", "object.frag");
-    shaders["color"] = new Shader("KuwaharaVertShader.glsl", "BasicColorFragShader.glsl");
-    shaders["kuwahara"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaFragShader.glsl");
-    shaders["kuwaharatwo"] = new Shader("KuwaharaVertShader.glsl", "KuwaharaTwoFragShader.glsl");
-    shaders["gaussian"] = new Shader("KuwaharaVertShader.glsl", "GaussianBlurFragShader.glsl");
-    shaders["derivative"] = new Shader("KuwaharaVertShader.glsl", "DerivativeFragShader.glsl");
-    shaders["laplacian"] = new Shader("KuwaharaVertShader.glsl", "LaplacianFragShader.glsl");
-    shaders["sobel"] = new Shader("KuwaharaVertShader.glsl", "sobelFragShader.glsl");
-    shaders["derivative"] = new Shader("KuwaharaVertShader.glsl", "DerivativeFragShader.glsl");
-    shaders["etf"] = new Shader("KuwaharaVertShader.glsl", "etfFragShader.glsl");
-    shaders["composite"] = new Shader("KuwaharaVertShader.glsl", "compositeFragShader.glsl");
 
 
+ //set up shaders
+    shaders["color"] = new Shader("GeneralVertShader.glsl", "BasicColorFragShader.glsl");
+    shaders["kuwahara"] = new Shader("GeneralVertShader.glsl", "KuwaharaFragShader.glsl");
+    shaders["gaussian"] = new Shader("GeneralVertShader.glsl", "GaussianBlurFragShader.glsl");
+    shaders["sobel"] = new Shader("GeneralVertShader.glsl", "SobelFragShader.glsl");
+    shaders["composite"] = new Shader("GeneralVertShader.glsl", "CompositeFragShader.glsl");
 
 
-   // shaders["vPoints"] = new Shader("veronPointVertShader.glsl", "veronPointFragShader.glsl");
-
-
-
-
-
-
-    unsigned int fakeVAO, fakeEBO, fakeVBO;
-    glGenVertexArrays(1, &fakeVAO);
-    glGenBuffers(1, &fakeVBO);
-    //glGenBuffers(1, &fakeEBO);
-    glBindVertexArray(fakeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, fakeVBO);
-    glBufferData(GL_ARRAY_BUFFER, screenX*screenY, NULL, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 1, GL_BYTE, GL_FALSE, sizeof(char), (void*)0);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fakeEBO);
-    glBindVertexArray(0);
-
-
-    GLuint frameTextureID;
-
-    glGenTextures(1, &frameTextureID);
-
-
+//set up gaussian blur kernel
     int gaussianSize = 7;
-
     float* gaussianKernel = new float[gaussianSize * gaussianSize];
-
     create2DGaussianKernel(1.0f, gaussianSize, gaussianKernel);
 
+//load images, including input
+    int width, height;
+    GLuint canvasTextureID = textureFromFile("canvas.jpg", width, height);
+    GLuint frameTextureID = textureFromFile("sample.png", width, height);
+    glfwSetWindowSize(window, width, height);
+    frameBufferSizeCallback(window, width, height);
 
-
-    GLfloat* pointTexturePixels = new GLfloat[numberOfPoints *2];
-    //vec4* polarPoints = new vec4[numberOfPoints];
-
-    //vec2* pointsArray = new vec2[numberOfPoints];
-
+//fps stuff
     int frameCounter = -1;
     float frameTimes[30](0);
     int lastSecondFrameCount = -1;
 
-    printf("begining of draw loop\n");
 
-    //int sampleTexture = textureFromFile("sample.png");
-
-    glDeleteTextures(1, &frameTextureID);
-    glGenTextures(1, &frameTextureID);
-    glBindTexture(GL_TEXTURE_2D, frameTextureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
-    //  frameTextureID = textureFromFile("monkey.png", "./");
+    mat4 orth = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f);
 
     while (!glfwWindowShouldClose(window)) {
+
+
+        //more fps stuff
         double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -395,50 +370,30 @@ int main()
         frameTimes[frameCounter % 30] = 1.0f / float(deltaTime);
 
 
-
-
-
-        /*for (uint64_t i = 0; i < theVideo.width * theVideo.height; i += 3) {
-            if(i%100==0)
-            printf("%i, %i, %i\n", theFrame[i + 0], theFrame[i + 1], theFrame[i + 2]);
-        }*/
-
-
-        
-
-        glBindTexture(GL_TEXTURE_2D, frameTextureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, theVideo.width, theVideo.height, 0, GL_RGB, GL_UNSIGNED_BYTE, theVideo.getFrame(currentFrame));
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-
-
+        //clear buffers
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        float sinit = (sin(viewAngle / 5.0f));
-        float cosit = (cos(viewAngle / 5.0f));
-
-        vec3 eye = vec3(sinit * 5.0f, 5.0f, cosit * 5.0f);
-        //vec3 eye = vec3(5.0f, 200.0f, 5.0f);//for dedust
-        //vec3 eye = vec3(5.0, 5.0, 5.0);
-        mat4 view = glm::lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
-
-
-        float ratio = (float)screenY / (float)screenX;
-
-        if (stageUpTo >= COLOR) {
+//All of these stages are pretty similar, so i'm just going to comment one of them
+        if (stageUpTo >= COLOR) {//if this is the last stage, output to normal fb, otherwise output to special fb
             glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > COLOR ? colorDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            //load the right shader + uniforms
             shader = shaders["color"];
             shader->use();
-            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+            shader->setMatFour("projection", orth);
 
-            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
+            //load textures
+            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture"); 
             glUniform1i(colorLocation, 0);
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, frameTextureID);
+
+            //draw it
             flatscreen.draw(shader);
         }
 
@@ -448,7 +403,7 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["gaussian"];
             shader->use();
-            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+            shader->setMatFour("projection", orth);
             glUniform1fv(glGetUniformLocation(shader->program, "gaussianKernel"), gaussianSize * gaussianSize, gaussianKernel);
 
             uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
@@ -463,7 +418,7 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["kuwahara"];
             shader->use();
-            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+            shader->setMatFour("projection", orth);
 
             shader->setInt("kernalWidth", kuwaharaX);
             shader->setInt("kernalHeight", kuwaharaY);
@@ -476,28 +431,13 @@ int main()
             flatscreen.draw(shader);
         }
 
-
-        if (stageUpTo >= LAPLACIAN) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > LAPLACIAN ? labplacianDFT.framebuffer : 0);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["laplacian"];
-            shader->use();
-            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
-
-            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocation, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, kuwaharaDFT.texture);
-            flatscreen.draw(shader);
-        }
         if (stageUpTo >= SOBEL) {
             glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > SOBEL ? sobelDFT.framebuffer : 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["sobel"];
             shader->use();
-            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
+            shader->setMatFour("projection", orth);
 
             uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
             glUniform1i(colorLocation, 0);
@@ -507,7 +447,7 @@ int main()
         }
 
         if (stageUpTo >= COMPOSITE) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > COMPOSITE ? compositeDFT.framebuffer : 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             shader = shaders["composite"];
@@ -515,7 +455,7 @@ int main()
             shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
             glUniform1fv(glGetUniformLocation(shader->program, "gaussianKernel"), gaussianSize * gaussianSize, gaussianKernel);
 
-            uint32_t lapLocation = glGetUniformLocation(shader->program, "laplacianTexture");
+            uint32_t lapLocation = glGetUniformLocation(shader->program, "sobelTexture");
             glUniform1i(lapLocation, 0);
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, sobelDFT.texture);
@@ -525,97 +465,13 @@ int main()
             glActiveTexture(GL_TEXTURE0 + 1);
             glBindTexture(GL_TEXTURE_2D, kuwaharaDFT.texture);
 
+            uint32_t canvasloc = glGetUniformLocation(shader->program, "canvasTexture");
+            glUniform1i(canvasloc, 2);
+            glActiveTexture(GL_TEXTURE0 + 2);
+            glBindTexture(GL_TEXTURE_2D, canvasTextureID);
+
             flatscreen.draw(shader);
         }
-
-
-
-       /* if (stageUpTo >= KUWAHARA_TWO) {
-            glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > KUWAHARA_TWO ? kuwaharaDFT.framebuffer : 0);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            shader = shaders["kuwaharatwo"];
-            shader->use();
-            shader->setMatFour("projection", glm::ortho(0.0f, 1.0f, 0.0f, 1.0f));
-
-            shader->setInt("kernalWidth", kuwaharaX);
-            shader->setInt("kernalHeight", kuwaharaY);
-
-            uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-            glUniform1i(colorLocation, 0);
-            glActiveTexture(GL_TEXTURE0 + 0);
-            glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-
-            flatscreen.draw(shader);
-        }*/
-
-        //if (stageUpTo >= LAPLACIAN) {
-        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > LAPLACIAN ? labplacianDFT.framebuffer : 0);
-        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //    shader = shaders["laplacian"];
-        //    shader->use();
-        //    shader->setMatFour("projection", ortho);
-
-        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-        //    glUniform1i(colorLocation, 0);
-        //    glActiveTexture(GL_TEXTURE0 + 0);
-        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-        //    flatscreen.draw(shader);
-        //}
-        //if (stageUpTo >= SOBEL) {
-        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > SOBEL ? sobelDFT.framebuffer : 0);
-        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //    shader = shaders["sobel"];
-        //    shader->use();
-        //    shader->setMatFour("projection", ortho);
-
-        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-        //    glUniform1i(colorLocation, 0);
-        //    glActiveTexture(GL_TEXTURE0 + 0);
-        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-        //    flatscreen.draw(shader);
-        //}
-        //if (stageUpTo >= DERIVATIVE) {
-        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > DERIVATIVE ? derivativeDFT.framebuffer : 0);
-        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //    shader = shaders["derivative"];
-        //    shader->use();
-        //    shader->setMatFour("projection", ortho);
-
-        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-        //    glUniform1i(colorLocation, 0);
-        //    glActiveTexture(GL_TEXTURE0 + 0);
-        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-        //    flatscreen.draw(shader);
-        //}
-        //if (stageUpTo >= ETF) {
-
-        //     
-        //    glBindFramebuffer(GL_FRAMEBUFFER, stageUpTo > ETF ? ETF1DTF.framebuffer : 0);
-        //    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //    shader = shaders["etf"];
-        //    shader->use();
-        //    shader->setMatFour("projection", ortho);
-
-        //    uint32_t colorLocation = glGetUniformLocation(shader->program, "colorTexture");
-        //    glUniform1i(colorLocation, 0);
-        //    glActiveTexture(GL_TEXTURE0 + 0);
-        //    glBindTexture(GL_TEXTURE_2D, gaussianDFT.texture);
-
-        //    uint32_t derivativeLocation = glGetUniformLocation(shader->program, "derivativeTexture");
-        //    glUniform1i(derivativeLocation, 1);
-        //    glActiveTexture(GL_TEXTURE0 + 1);
-        //    glBindTexture(GL_TEXTURE_2D, derivativeDFT.texture);
-        //    flatscreen.draw(shader);
-
-        //}
-
-
-
         processInput(window);
         glfwSwapBuffers(window);
         glfwPollEvents();

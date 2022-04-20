@@ -143,59 +143,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DTriangle.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="Video.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="NPR-Group-Project.cpp" />
+    <ClCompile Include="Screen.cpp" />
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="delaunator.hpp" />
-    <ClInclude Include="DTriangle.hpp" />
     <ClInclude Include="glad\glad.h" />
     <ClInclude Include="KHR\khrplatform.h" />
-    <ClInclude Include="Mesh.hpp" />
-    <ClInclude Include="Model.hpp" />
     <ClInclude Include="Screen.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="stb_image.h" />
-    <ClInclude Include="stb_image_write.h" />
-    <ClInclude Include="vec2Hash.hpp" />
-    <ClInclude Include="Video.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BasicColorFragShader.glsl" />
-    <None Include="compositeFragShader.glsl" />
-    <None Include="depthFragShader.glsl" />
-    <None Include="etfFragShader.glsl" />
-    <None Include="fragShader.glsl" />
+    <None Include="CompositeFragShader.glsl" />
     <None Include="GaussianBlurFragShader.glsl" />
     <None Include="KuwaharaFragShader.glsl" />
-    <None Include="kuwaharaTwoFragShader.glsl" />
-    <None Include="KuwaharaVertShader.glsl" />
-    <None Include="LaplacianFragShader.glsl" />
-    <None Include="lineFragShader.glsl" />
-    <None Include="lineVertShader.glsl" />
-    <None Include="normalFragShader.glsl" />
-    <None Include="object.frag" />
-    <None Include="object.vert" />
+    <None Include="GeneralVertShader.glsl" />
     <None Include="packages.config" />
-    <None Include="pointFragShader.glsl" />
-    <None Include="pointVertShader.glsl" />
-    <None Include="simple.frag" />
-    <None Include="simple.vert" />
-    <None Include="simpleFragShader.glsl" />
-    <None Include="simpleVertShader.glsl" />
-    <None Include="sobelFragShader.glsl" />
-    <None Include="sobelVertShader.glsl" />
-    <None Include="tempPointDisplayFragShader.glsl" />
-    <None Include="tempPointDisplayVertShader.glsl" />
-    <None Include="thirdFragShader.glsl" />
-    <None Include="thirdVertShader.glsl" />
-    <None Include="vertShader.glsl" />
-    <None Include="DerivativeFragShader.glsl" />
+    <None Include="SobelFragShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

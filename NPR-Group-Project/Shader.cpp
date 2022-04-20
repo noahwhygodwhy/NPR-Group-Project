@@ -28,7 +28,7 @@ unsigned int makeShader(string filename, uint type) {
     }
     else
     {
-        printf("SHADER::%s::COMPILATION_SUCCEEDED\n", filename.c_str());
+        //printf("SHADER::%s::COMPILATION_SUCCEEDED\n", filename.c_str());
     }
     return shader;
 }
