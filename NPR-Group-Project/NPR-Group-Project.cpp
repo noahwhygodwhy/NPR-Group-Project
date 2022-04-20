@@ -355,7 +355,7 @@ int main()
 //load images, including input
     int width, height;
     GLuint canvasTextureID = textureFromFile("canvas.jpg", width, height);
-    GLuint frameTextureID = textureFromFile("sample.png", width, height);
+    GLuint frameTextureID = textureFromFile("rit.jpg", width, height);
     glfwSetWindowSize(window, width, height);
     frameBufferSizeCallback(window, width, height);
 
