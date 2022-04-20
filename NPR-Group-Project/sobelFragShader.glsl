@@ -38,7 +38,7 @@ void main()
     for(int x = -1; x <= 1; x++){
         for(int y = -1; y <= 1; y++)
         {
-            ivec2 coord = clamp(ivec2(gl_FragCoord.xy)+ivec2(x, y), ivec2(0, 0), maxSize-ivec2(1.0));//maxSize-ivec2(1.0)
+            ivec2 coord = clamp(ivec2(gl_FragCoord.xy)+ivec2(x, y), ivec2(0, 0), maxSize-ivec2(1.0));
 
             vec3 theColor = texelFetch(colorTexture, coord, 0).xyz;
             sA += theColor * ka[x+1][y+1];
@@ -48,5 +48,4 @@ void main()
 
 
     FragColor = vec4(vec3(avgRGB(abs(sA + sB))), 1.0);
-    //FragColor = vec4(vec3(clamp(sA+sB, 0.0, 1.0)), 1.0);
 }
